@@ -222,7 +222,35 @@ export default function CollegesPage() {
             return;
           }
           const worksheet = workbook.Sheets[firstSheetName];
-          const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          
+          // Smart Header Detection: automatically skips title banners/cover rows
+          const raw2D = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          let headerIndex = 0;
+          for (let i = 0; i < Math.min(raw2D.length, 15); i++) {
+            const row = raw2D[i] || [];
+            const validCells = row.filter(c => String(c || '').trim().length > 0);
+            if (validCells.length >= 3) {
+              const line = row.join(' ').toLowerCase();
+              if (line.includes('email') || line.includes('mail') || (line.includes('name') && line.includes('college')) || line.includes('website') || line.includes('district')) {
+                headerIndex = i;
+                break;
+              }
+            }
+          }
+
+          const headerRow = (raw2D[headerIndex] || []).map(h => String(h || '').trim());
+          const rows = [];
+          for (let i = headerIndex + 1; i < raw2D.length; i++) {
+            const rowArr = raw2D[i] || [];
+            if (!rowArr.some(c => String(c || '').trim().length > 0)) continue;
+            const obj = {};
+            headerRow.forEach((colName, idx) => {
+              if (colName) {
+                obj[colName] = rowArr[idx] !== undefined && rowArr[idx] !== null ? String(rowArr[idx]).trim() : '';
+              }
+            });
+            rows.push(obj);
+          }
 
           if (!rows || rows.length === 0) {
             setAlert({ type: 'warning', message: 'The uploaded Excel file contains no data rows.' });
