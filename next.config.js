@@ -7,6 +7,9 @@ const nextConfig = {
   },
   serverExternalPackages: ['better-sqlite3'],
   turbopack: {},
+  outputFileTracingIncludes: {
+    '/api/**': ['./database.sqlite'],
+  },
   webpack: (config, { isServer, dev }) => {
     if (isServer) {
       config.externals = [...(config.externals || []), 'better-sqlite3'];

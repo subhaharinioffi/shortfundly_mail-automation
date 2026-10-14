@@ -5,6 +5,9 @@ import { getDb } from '@/lib/db';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,54 +18,79 @@ export async function POST(req) {
     const contentType = req.headers.get('content-type') || '';
     let rows = [];
 
-    if (contentType.includes('application/json')) {
-      const body = await req.json();
-      rows = Array.isArray(body) ? body : body.rows || [];
-    } else if (contentType.includes('multipart/form-data')) {
+    if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData();
       const file = formData.get('file');
       if (file) {
+        const fileName = (file.name || '').toLowerCase();
         const buffer = Buffer.from(await file.arrayBuffer());
-        const workbook = XLSX.read(buffer, { type: 'buffer' });
-        const sheetName = workbook.SheetNames[0];
-        if (sheetName) {
-          const sheet = workbook.Sheets[sheetName];
-          const raw2D = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-          let headerIndex = 0;
-          for (let i = 0; i < Math.min(raw2D.length, 15); i++) {
-            const r = raw2D[i] || [];
-            if (r.filter(c => String(c || '').trim().length > 0).length >= 3) {
-              const l = r.join(' ').toLowerCase();
-              if (l.includes('email') || l.includes('mail') || (l.includes('name') && l.includes('college')) || l.includes('website') || l.includes('district')) {
-                headerIndex = i;
-                break;
+
+        if (fileName.endsWith('.csv')) {
+          const text = buffer.toString('utf-8');
+          const parsed = Papa.parse(text, {
+            header: true,
+            skipEmptyLines: true,
+          });
+          rows = parsed.data || [];
+        } else {
+          // Parse .xlsx, .xls, or binary spreadsheet
+          const workbook = XLSX.read(buffer, { type: 'buffer' });
+          const sheetName = workbook.SheetNames[0];
+          if (sheetName) {
+            const sheet = workbook.Sheets[sheetName];
+            const raw2D = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            
+            // Smart Header Detection: automatically skip title banners / subtitle rows
+            let headerIndex = 0;
+            for (let i = 0; i < Math.min(raw2D.length, 15); i++) {
+              const r = raw2D[i] || [];
+              const nonEmpty = r.filter(c => String(c || '').trim().length > 0);
+              if (nonEmpty.length >= 3) {
+                const line = r.join(' ').toLowerCase();
+                if (
+                  line.includes('email') || 
+                  line.includes('mail') || 
+                  (line.includes('name') && line.includes('college')) || 
+                  line.includes('website') || 
+                  line.includes('district') ||
+                  line.includes('university')
+                ) {
+                  headerIndex = i;
+                  break;
+                }
               }
             }
-          }
-          const headerRow = (raw2D[headerIndex] || []).map(h => String(h || '').trim());
-          rows = [];
-          for (let i = headerIndex + 1; i < raw2D.length; i++) {
-            const rowArr = raw2D[i] || [];
-            if (!rowArr.some(c => String(c || '').trim().length > 0)) continue;
-            const obj = {};
-            headerRow.forEach((colName, idx) => {
-              if (colName) obj[colName] = rowArr[idx] !== undefined && rowArr[idx] !== null ? String(rowArr[idx]).trim() : '';
-            });
-            rows.push(obj);
+
+            const headerRow = (raw2D[headerIndex] || []).map(h => String(h || '').trim());
+            rows = [];
+            for (let i = headerIndex + 1; i < raw2D.length; i++) {
+              const rowArr = raw2D[i] || [];
+              if (!rowArr.some(c => String(c || '').trim().length > 0)) continue;
+              const obj = {};
+              headerRow.forEach((colName, idx) => {
+                if (colName) {
+                  obj[colName] = rowArr[idx] !== undefined && rowArr[idx] !== null ? String(rowArr[idx]).trim() : '';
+                }
+              });
+              rows.push(obj);
+            }
           }
         }
       }
+    } else if (contentType.includes('application/json')) {
+      const body = await req.json();
+      rows = Array.isArray(body) ? body : body.rows || [];
     } else {
       const text = await req.text();
       const parsed = Papa.parse(text, {
         header: true,
         skipEmptyLines: true,
       });
-      rows = parsed.data;
+      rows = parsed.data || [];
     }
 
     if (!rows || rows.length === 0) {
-      return NextResponse.json({ error: 'No data found in uploaded dataset.' }, { status: 400 });
+      return NextResponse.json({ error: 'No data rows found in uploaded dataset.' }, { status: 400 });
     }
 
     const db = getDb();

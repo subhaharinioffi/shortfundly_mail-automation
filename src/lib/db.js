@@ -207,9 +207,12 @@ Product Manager | Shortfundly`;
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'uncontacted')
     `);
 
-    for (const c of ODISHA_COLLEGES_SEED) {
-      insertCollege.run(c.state, c.city, c.college_name, c.website_url, c.department, c.contact_person, c.email, c.source_page_url, c.notes);
-    }
+    const seedTx = db.transaction((items) => {
+      for (const c of items) {
+        insertCollege.run(c.state, c.city, c.college_name, c.website_url, c.department, c.contact_person, c.email, c.source_page_url, c.notes);
+      }
+    });
+    seedTx(ODISHA_COLLEGES_SEED);
   }
 
   // Seed system settings if empty
