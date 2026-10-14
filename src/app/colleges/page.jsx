@@ -63,6 +63,7 @@ export default function CollegesPage() {
   // Import state
   const [importFile, setImportFile] = useState(null);
   const [importText, setImportText] = useState('');
+  const [importMode, setImportMode] = useState('upsert');
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
 
@@ -211,13 +212,14 @@ export default function CollegesPage() {
       if (importFile) {
         const formData = new FormData();
         formData.append('file', importFile);
+        formData.append('mode', importMode);
 
         res = await fetch('/api/colleges/import', {
           method: 'POST',
           body: formData,
         });
       } else if (importText && importText.trim()) {
-        res = await fetch('/api/colleges/import', {
+        res = await fetch(`/api/colleges/import?mode=${encodeURIComponent(importMode)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'text/csv' },
           body: importText.trim(),
@@ -232,9 +234,10 @@ export default function CollegesPage() {
       if (res.ok) {
         setImportResult(data);
         const stats = data.stats || {};
+        const totalProcessed = stats.totalProcessed ?? stats.inserted ?? 0;
         setAlert({ 
           type: 'success', 
-          message: `Import complete: ${stats.inserted ?? 0} new colleges imported, ${stats.skippedDuplicates ?? 0} duplicates prevented (${stats.totalRows ?? 0} total rows processed).` 
+          message: `Import complete: ${totalProcessed} colleges saved to database (${stats.inserted ?? 0} new added, ${stats.updated ?? 0} updated from file, ${stats.skippedDuplicates ?? 0} internal file duplicates handled).` 
         });
         fetchColleges();
       } else {
@@ -740,9 +743,35 @@ export default function CollegesPage() {
                 <div className="alert-box info">
                   <FileSpreadsheet size={18} />
                   <div>
-                    <strong>Automated De-Duplication Active:</strong> The engine automatically parses headers 
-                    (State, City, College Name, Official website URL, Department or contact person, Official email address, Source page URL) 
-                    and skips any colleges whose official email is already present in your database.
+                    <strong>Smart Dataset Sync:</strong> Upload your official Odisha colleges file. 
+                    New colleges are added, and any existing colleges are updated with the latest contacts and website details.
+                  </div>
+                </div>
+
+                {/* Import Mode Selection */}
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '12px 14px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <label className="form-label" style={{ marginBottom: '8px', fontWeight: 600 }}>Import Action Mode</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                      <input 
+                        type="radio" 
+                        name="importMode" 
+                        value="upsert" 
+                        checked={importMode === 'upsert'} 
+                        onChange={() => setImportMode('upsert')} 
+                      />
+                      <span><strong>Sync &amp; Update Directory</strong> (Recommended) — Save new colleges and update existing colleges with this file's data</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                      <input 
+                        type="radio" 
+                        name="importMode" 
+                        value="replace" 
+                        checked={importMode === 'replace'} 
+                        onChange={() => setImportMode('replace')} 
+                      />
+                      <span><strong>Fresh Import (Replace All)</strong> — Wipe the existing directory and import all 1000+ colleges fresh from this spreadsheet</span>
+                    </label>
                   </div>
                 </div>
 
@@ -767,7 +796,7 @@ export default function CollegesPage() {
                 <div className="form-group">
                   <label className="form-label">Paste CSV Rows</label>
                   <textarea
-                    rows={6}
+                    rows={5}
                     placeholder="State,City,College Name,Official website URL,Department,Contact Person,Official email address,Source page URL&#10;Odisha,Bhubaneswar,Example College,https://example.ac.in,Computer Science,Prof. Sen,contact@example.ac.in,https://example.ac.in/contact"
                     value={importText}
                     onChange={(e) => setImportText(e.target.value)}
@@ -782,11 +811,17 @@ export default function CollegesPage() {
                     <div style={{ fontSize: '14px', fontWeight: 700, color: '#10B981', marginBottom: '8px' }}>
                       Import Summary
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', fontSize: '13px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', fontSize: '12px' }}>
                       <div>Total Rows: <strong>{importResult.stats.totalRows}</strong></div>
-                      <div>New Added: <strong style={{ color: '#10B981' }}>{importResult.stats.inserted}</strong></div>
-                      <div>Duplicates Skipped: <strong style={{ color: '#F59E0B' }}>{importResult.stats.skippedDuplicates}</strong></div>
+                      <div>Colleges Saved: <strong style={{ color: '#10B981' }}>{importResult.stats.totalProcessed ?? (importResult.stats.inserted + (importResult.stats.updated || 0))}</strong></div>
+                      <div>New Added: <strong style={{ color: '#38BDF8' }}>{importResult.stats.inserted}</strong></div>
+                      <div>Updated from File: <strong style={{ color: '#A78BFA' }}>{importResult.stats.updated || 0}</strong></div>
                     </div>
+                    {importResult.stats.skippedDuplicates > 0 && (
+                      <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '6px' }}>
+                        Note: {importResult.stats.skippedDuplicates} row(s) inside this file shared identical emails and were de-duplicated.
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -806,11 +841,11 @@ export default function CollegesPage() {
                   className="btn btn-primary"
                 >
                   {importing ? (
-                    <span>Validating &amp; Importing...</span>
+                    <span>Processing &amp; Saving...</span>
                   ) : (
                     <>
                       <Upload size={14} />
-                      <span>Process &amp; Deduplicate Dataset</span>
+                      <span>Upload &amp; Sync Dataset</span>
                     </>
                   )}
                 </button>

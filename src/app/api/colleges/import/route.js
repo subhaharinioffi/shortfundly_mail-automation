@@ -15,12 +15,17 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(req.url);
     const contentType = req.headers.get('content-type') || '';
     let rows = [];
+    let mode = searchParams.get('mode') || 'upsert'; // 'upsert' or 'replace'
 
     if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData();
       const file = formData.get('file');
+      const formMode = formData.get('mode');
+      if (formMode) mode = String(formMode);
+
       if (file) {
         const fileName = (file.name || '').toLowerCase();
         const buffer = Buffer.from(await file.arrayBuffer());
@@ -79,7 +84,12 @@ export async function POST(req) {
       }
     } else if (contentType.includes('application/json')) {
       const body = await req.json();
-      rows = Array.isArray(body) ? body : body.rows || [];
+      if (body && typeof body === 'object' && !Array.isArray(body)) {
+        if (body.mode) mode = body.mode;
+        rows = body.rows || [];
+      } else {
+        rows = Array.isArray(body) ? body : [];
+      }
     } else {
       const text = await req.text();
       const parsed = Papa.parse(text, {
@@ -94,19 +104,39 @@ export async function POST(req) {
     }
 
     const db = getDb();
+
+    // If replace mode, wipe existing records first
+    if (mode === 'replace') {
+      db.prepare('DELETE FROM colleges').run();
+    }
+
     const existingEmails = new Set(
       db.prepare('SELECT LOWER(email) as email FROM colleges').all().map(r => r.email)
     );
 
     let insertedCount = 0;
-    let skippedDuplicatesCount = 0;
+    let updatedCount = 0;
+    let duplicatesInFileCount = 0;
     let invalidCount = 0;
-    const skippedList = [];
     const seenInBatch = new Set();
 
     const insertStmt = db.prepare(`
       INSERT INTO colleges (state, city, college_name, website_url, department, contact_person, email, source_page_url, notes, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'uncontacted')
+    `);
+
+    const updateStmt = db.prepare(`
+      UPDATE colleges SET
+        state = ?,
+        city = ?,
+        college_name = ?,
+        website_url = ?,
+        department = ?,
+        contact_person = ?,
+        source_page_url = ?,
+        notes = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE LOWER(email) = LOWER(?)
     `);
 
     const transaction = db.transaction((items) => {
@@ -219,45 +249,61 @@ export async function POST(req) {
           continue;
         }
 
-        // Check if already in DB or duplicate in batch
-        if (existingEmails.has(email) || seenInBatch.has(email)) {
-          skippedDuplicatesCount++;
-          if (skippedList.length < 15) {
-            skippedList.push({ college: college_name, email, reason: 'Duplicate email address' });
-          }
+        // Prevent duplicate rows within the uploaded file itself
+        if (seenInBatch.has(email)) {
+          duplicatesInFileCount++;
           continue;
         }
-
         seenInBatch.add(email);
-        existingEmails.add(email);
 
-        insertStmt.run(
-          state,
-          city,
-          college_name,
-          website_url,
-          department,
-          contact_person,
-          email,
-          source_page_url,
-          notes
-        );
-        insertedCount++;
+        // If email already exists in DB, update/sync its details with latest file data
+        if (existingEmails.has(email)) {
+          updateStmt.run(
+            state,
+            city,
+            college_name,
+            website_url,
+            department,
+            contact_person,
+            source_page_url,
+            notes,
+            email
+          );
+          updatedCount++;
+        } else {
+          // If new email, insert brand new college record
+          insertStmt.run(
+            state,
+            city,
+            college_name,
+            website_url,
+            department,
+            contact_person,
+            email,
+            source_page_url,
+            notes
+          );
+          insertedCount++;
+          existingEmails.add(email);
+        }
       }
     });
 
     transaction(rows);
 
+    const totalProcessed = insertedCount + updatedCount;
+
     return NextResponse.json({
       success: true,
-      message: `Processed ${rows.length} rows successfully.`,
+      message: `Processed ${rows.length} rows successfully: ${totalProcessed} colleges saved to database (${insertedCount} new added, ${updatedCount} updated from file).`,
       stats: {
         totalRows: rows.length,
+        totalProcessed,
         inserted: insertedCount,
-        skippedDuplicates: skippedDuplicatesCount,
+        updated: updatedCount,
+        skippedDuplicates: duplicatesInFileCount,
         invalidRows: invalidCount,
       },
-      skippedSamples: skippedList,
     });
   } catch (error) {
     return NextResponse.json({ error: error.message || 'Dataset import failed' }, { status: 500 });
