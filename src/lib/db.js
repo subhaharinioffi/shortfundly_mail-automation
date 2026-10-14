@@ -22,10 +22,15 @@ function getDatabasePath() {
       if (fs.existsSync(sourceDbPath)) {
         try {
           fs.copyFileSync(sourceDbPath, tmpDbPath);
+          fs.chmodSync(tmpDbPath, 0o666);
         } catch (copyErr) {
           console.warn('Could not copy bundled database.sqlite to /tmp, will initialize fresh:', copyErr.message);
         }
       }
+    } else {
+      try {
+        fs.chmodSync(tmpDbPath, 0o666);
+      } catch (_) {}
     }
     return tmpDbPath;
   }
@@ -230,26 +235,41 @@ Product Manager | Shortfundly`;
 
 export function getDb() {
   if (!global.__dbInstance) {
+    const isServerless = Boolean(
+      process.env.VERCEL || 
+      process.env.AWS_LAMBDA_FUNCTION_NAME || 
+      process.env.LAMBDA_TASK_ROOT ||
+      process.env.VERCEL_ENV
+    );
+
     const targetPath = getDatabasePath();
     let db;
 
     try {
       db = new Database(targetPath);
     } catch (err) {
-      // In case default path fails on a read-only filesystem, fallback to temporary storage
-      if (err.code === 'SQLITE_CANTOPEN' || err.message?.includes('unable to open database file')) {
-        const fallbackPath = path.join(process.env.TEMP || '/tmp', 'database.sqlite');
+      try {
+        const fallbackPath = path.join(process.env.TEMP || '/tmp', 'database_fallback.sqlite');
         db = new Database(fallbackPath);
-      } else {
-        throw err;
+      } catch (finalErr) {
+        // As a last-resort memory database if filesystem is completely locked
+        db = new Database(':memory:');
       }
     }
 
-    try {
-      db.pragma('journal_mode = WAL');
-    } catch (_) {
+    if (isServerless) {
       try {
         db.pragma('journal_mode = DELETE');
+      } catch (_) {}
+      try {
+        db.pragma('synchronous = NORMAL');
+      } catch (_) {}
+      try {
+        db.pragma('busy_timeout = 5000');
+      } catch (_) {}
+    } else {
+      try {
+        db.pragma('journal_mode = WAL');
       } catch (_) {}
     }
     db.pragma('foreign_keys = ON');
