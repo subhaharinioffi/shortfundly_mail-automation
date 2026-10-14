@@ -21,7 +21,14 @@ export async function GET(req) {
     const city = searchParams.get('city') || '';
     const status = searchParams.get('status') || '';
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '50', 10);
+    const rawLimit = searchParams.get('limit');
+    let limit;
+    if (rawLimit === 'all' || rawLimit === 'none' || rawLimit === '-1') {
+      limit = 100000;
+    } else {
+      const parsed = parseInt(rawLimit || '50', 10);
+      limit = isNaN(parsed) || parsed <= 0 ? 50 : Math.min(parsed, 100000);
+    }
     const offset = (page - 1) * limit;
 
     const db = getDb();

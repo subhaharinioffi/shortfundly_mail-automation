@@ -42,6 +42,8 @@ export default function CampaignsPage() {
 
   // Selected Colleges
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [customBatchCount, setCustomBatchCount] = useState('');
+  const [displayLimit, setDisplayLimit] = useState('all');
 
   // Campaign Settings
   const [senderName, setSenderName] = useState('Shortfundly Campus Team');
@@ -61,7 +63,7 @@ export default function CampaignsPage() {
     setLoading(true);
     try {
       const [colRes, tmplRes] = await Promise.all([
-        fetch('/api/colleges?limit=100'),
+        fetch('/api/colleges?limit=all'),
         fetch('/api/templates'),
       ]);
 
@@ -131,7 +133,32 @@ export default function CampaignsPage() {
 
   const uniqueCities = Array.from(new Set(colleges.map(c => c.city))).sort();
 
-  // Selection toggles
+  // Visible subset if user applies display limiter
+  const visibleColleges = displayLimit === 'all'
+    ? filteredColleges
+    : filteredColleges.slice(0, parseInt(displayLimit, 10) || filteredColleges.length);
+
+  // Batch selection provisions
+  const selectBatch = (count) => {
+    const slice = filteredColleges.slice(0, count);
+    setSelectedIds(new Set(slice.map(c => c.id)));
+  };
+
+  const selectAllFiltered = () => {
+    setSelectedIds(new Set(filteredColleges.map(c => c.id)));
+  };
+
+  const deselectAll = () => {
+    setSelectedIds(new Set());
+  };
+
+  const applyCustomBatch = () => {
+    const num = parseInt(customBatchCount, 10);
+    if (!isNaN(num) && num > 0) {
+      selectBatch(num);
+    }
+  };
+
   const toggleSelectAll = () => {
     if (selectedIds.size === filteredColleges.length && filteredColleges.length > 0) {
       setSelectedIds(new Set());
@@ -140,7 +167,10 @@ export default function CampaignsPage() {
     }
   };
 
-  const toggleSelectOne = (id) => {
+  const toggleSelectOne = (id, e) => {
+    if (e && e.stopPropagation) {
+      e.stopPropagation();
+    }
     const next = new Set(selectedIds);
     if (next.has(id)) next.delete(id);
     else next.add(id);
@@ -293,41 +323,48 @@ export default function CampaignsPage() {
         
         {/* COLUMN 1: RECIPIENT SELECTION */}
         <div className="card">
-          <div className="card-header">
+          <div className="card-header" style={{ alignItems: 'flex-start' }}>
             <div>
               <div className="card-title">
                 <GraduationCap size={18} color="#FF324B" />
                 <span>Select Target Odisha Institutions</span>
               </div>
-              <div className="card-subtitle">
-                {selectedIds.size} of {filteredColleges.length} colleges selected
+              <div className="card-subtitle" style={{ marginTop: '4px' }}>
+                <span style={{ color: '#FF324B', fontWeight: 700 }}>{selectedIds.size}</span> of{' '}
+                <span style={{ color: '#FFFFFF', fontWeight: 600 }}>{filteredColleges.length}</span> colleges selected
+                {colleges.length > 0 && (
+                  <span style={{ color: '#64748B' }}> ({colleges.length} total in database)</span>
+                )}
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={toggleSelectAll}
-              className="btn btn-secondary btn-sm"
-            >
-              {selectedIds.size === filteredColleges.length && filteredColleges.length > 0 ? (
-                <>
-                  <CheckSquare size={13} color="#FF324B" />
-                  <span>Deselect All</span>
-                </>
-              ) : (
-                <>
-                  <Square size={13} />
-                  <span>Select All Filtered</span>
-                </>
-              )}
-            </button>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={selectAllFiltered}
+                className="btn btn-secondary btn-sm"
+                title="Select all colleges matching current filters"
+              >
+                <CheckSquare size={13} color="#FF324B" />
+                <span>Select All ({filteredColleges.length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={deselectAll}
+                className="btn btn-secondary btn-sm"
+                title="Deselect all colleges"
+              >
+                <Square size={13} />
+                <span>Deselect All</span>
+              </button>
+            </div>
           </div>
 
           {/* Filter Toolbar */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 0.9fr', gap: '10px', marginBottom: '12px' }}>
             <input
               type="text"
-              placeholder="Search college or email..."
+              placeholder="Search college, email, city..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="form-input"
@@ -339,7 +376,7 @@ export default function CampaignsPage() {
               className="form-select"
               style={{ fontSize: '12px' }}
             >
-              <option value="all">All Cities</option>
+              <option value="all">All Cities ({uniqueCities.length})</option>
               {uniqueCities.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -355,45 +392,153 @@ export default function CampaignsPage() {
               <option value="sent">Already Sent</option>
               <option value="failed">Failed Only</option>
             </select>
+            <select
+              value={displayLimit}
+              onChange={(e) => setDisplayLimit(e.target.value)}
+              className="form-select"
+              style={{ fontSize: '12px' }}
+              title="Control how many items to render in list"
+            >
+              <option value="all">Show All ({filteredColleges.length})</option>
+              <option value="100">Show 100</option>
+              <option value="250">Show 250</option>
+              <option value="500">Show 500</option>
+            </select>
+          </div>
+
+          {/* Quick Batch Selection Provision Toolbar */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '8px',
+            padding: '10px 12px',
+            background: 'rgba(255, 255, 255, 0.02)',
+            borderRadius: '6px',
+            border: '1px solid rgba(255, 255, 255, 0.05)',
+            marginBottom: '12px',
+            fontSize: '12px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <span style={{ color: '#94A3B8', fontWeight: 600 }}>Quick Select:</span>
+              <button
+                type="button"
+                onClick={() => selectBatch(25)}
+                className="btn btn-secondary btn-sm"
+                style={{ padding: '3px 8px', fontSize: '11px' }}
+              >
+                First 25
+              </button>
+              <button
+                type="button"
+                onClick={() => selectBatch(50)}
+                className="btn btn-secondary btn-sm"
+                style={{ padding: '3px 8px', fontSize: '11px' }}
+              >
+                First 50
+              </button>
+              <button
+                type="button"
+                onClick={() => selectBatch(100)}
+                className="btn btn-secondary btn-sm"
+                style={{ padding: '3px 8px', fontSize: '11px' }}
+              >
+                First 100
+              </button>
+              <button
+                type="button"
+                onClick={() => selectBatch(250)}
+                className="btn btn-secondary btn-sm"
+                style={{ padding: '3px 8px', fontSize: '11px' }}
+              >
+                First 250
+              </button>
+              <button
+                type="button"
+                onClick={() => selectBatch(500)}
+                className="btn btn-secondary btn-sm"
+                style={{ padding: '3px 8px', fontSize: '11px' }}
+              >
+                First 500
+              </button>
+              <button
+                type="button"
+                onClick={selectAllFiltered}
+                className="btn btn-secondary btn-sm"
+                style={{ padding: '3px 8px', fontSize: '11px', color: '#FF324B' }}
+              >
+                All ({filteredColleges.length})
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ color: '#64748B', fontSize: '11px' }}>Custom:</span>
+              <input
+                type="number"
+                min="1"
+                max={filteredColleges.length}
+                placeholder="Count"
+                value={customBatchCount}
+                onChange={(e) => setCustomBatchCount(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') applyCustomBatch(); }}
+                className="form-input"
+                style={{ width: '64px', padding: '3px 6px', fontSize: '11px', textAlign: 'center' }}
+              />
+              <button
+                type="button"
+                onClick={applyCustomBatch}
+                className="btn btn-secondary btn-sm"
+                style={{ padding: '3px 8px', fontSize: '11px' }}
+              >
+                Apply
+              </button>
+            </div>
           </div>
 
           {/* Scrollable College Checklist */}
-          <div style={{ maxHeight: '420px', overflowY: 'auto', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}>
-            {filteredColleges.length === 0 ? (
+          <div style={{ maxHeight: '480px', overflowY: 'auto', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}>
+            {visibleColleges.length === 0 ? (
               <div style={{ padding: '32px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
                 No colleges match current filters.
               </div>
             ) : (
-              filteredColleges.map((col) => {
+              visibleColleges.map((col, index) => {
                 const isSelected = selectedIds.has(col.id);
                 return (
                   <div
                     key={col.id}
-                    onClick={() => toggleSelectOne(col.id)}
+                    onClick={(e) => toggleSelectOne(col.id, e)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '12px 14px',
+                      padding: '10px 14px',
                       borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
                       background: isSelected ? 'rgba(255, 50, 75, 0.08)' : 'transparent',
+                      borderLeft: isSelected ? '3px solid #FF324B' : '3px solid transparent',
                       cursor: 'pointer',
-                      transition: 'background 0.15s ease'
+                      transition: 'background 0.12s ease'
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <input
                         type="checkbox"
                         checked={isSelected}
-                        onChange={() => {}} // handled by parent div click
-                        style={{ width: '16px', height: '16px', accentColor: '#FF324B' }}
+                        onChange={(e) => toggleSelectOne(col.id, e)}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ width: '16px', height: '16px', accentColor: '#FF324B', cursor: 'pointer' }}
                       />
+                      <span style={{ fontSize: '11px', color: '#64748B', fontFamily: 'monospace', minWidth: '36px' }}>
+                        #{index + 1}
+                      </span>
                       <div>
-                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: isSelected ? '#FFFFFF' : '#CBD5E1' }}>
                           {col.college_name}
                         </div>
                         <div style={{ fontSize: '11px', color: '#94A3B8' }}>
                           {col.city} • <span style={{ fontFamily: 'monospace', color: '#FF6B7E' }}>{col.email}</span>
+                          {col.department ? <span style={{ color: '#64748B' }}> • {col.department}</span> : null}
                         </div>
                       </div>
                     </div>
@@ -408,6 +553,11 @@ export default function CampaignsPage() {
               })
             )}
           </div>
+          {displayLimit !== 'all' && filteredColleges.length > visibleColleges.length && (
+            <div style={{ padding: '8px 12px', fontSize: '12px', color: '#94A3B8', textAlign: 'center', background: 'rgba(255, 255, 255, 0.02)' }}>
+              Showing {visibleColleges.length} of {filteredColleges.length} colleges. Choose &ldquo;Show All&rdquo; in the dropdown above to view all institutions.
+            </div>
+          )}
 
         </div>
 
