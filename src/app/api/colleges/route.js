@@ -74,7 +74,7 @@ export async function GET(req) {
     `);
     const colleges = listStmt.all(...params, limit, offset);
 
-    const cities = db.prepare('SELECT DISTINCT city FROM colleges WHERE city IS NOT NULL AND city != "" ORDER BY city ASC').all().map(c => c.city);
+    const cities = db.prepare("SELECT DISTINCT city FROM colleges WHERE city IS NOT NULL AND length(trim(city)) > 0 ORDER BY city ASC").all().map(c => c.city);
 
     const stats = db.prepare(`
       SELECT 
