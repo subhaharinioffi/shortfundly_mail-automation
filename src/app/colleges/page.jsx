@@ -10,7 +10,6 @@ import {
   Filter, 
   Plus, 
   Upload, 
-  Download, 
   ExternalLink, 
   Trash2, 
   Edit2, 
@@ -24,6 +23,7 @@ import {
   Mail,
   Building
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 export default function CollegesPage() {
   const { data: session, status } = useSession();
@@ -207,15 +207,41 @@ export default function CollegesPage() {
     setImportResult(null);
 
     try {
-      let bodyData = importText;
-      let headers = { 'Content-Type': 'text/csv' };
+      let bodyData;
+      let headers = {};
 
       if (importFile) {
-        bodyData = await importFile.text();
-      }
+        const fileName = (importFile.name || '').toLowerCase();
+        if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+          const arrayBuffer = await importFile.arrayBuffer();
+          const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          if (!firstSheetName) {
+            setAlert({ type: 'warning', message: 'No sheets found in the uploaded Excel workbook.' });
+            setImporting(false);
+            return;
+          }
+          const worksheet = workbook.Sheets[firstSheetName];
+          const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
 
-      if (!bodyData.trim()) {
-        setAlert({ type: 'warning', message: 'Please upload a CSV file or paste dataset rows.' });
+          if (!rows || rows.length === 0) {
+            setAlert({ type: 'warning', message: 'The uploaded Excel file contains no data rows.' });
+            setImporting(false);
+            return;
+          }
+
+          bodyData = JSON.stringify(rows);
+          headers['Content-Type'] = 'application/json';
+        } else {
+          // CSV or plain text file
+          bodyData = await importFile.text();
+          headers['Content-Type'] = 'text/csv';
+        }
+      } else if (importText && importText.trim()) {
+        bodyData = importText.trim();
+        headers['Content-Type'] = 'text/csv';
+      } else {
+        setAlert({ type: 'warning', message: 'Please upload an Excel (.xlsx, .xls) or CSV file, or paste dataset rows.' });
         setImporting(false);
         return;
       }
@@ -238,7 +264,7 @@ export default function CollegesPage() {
         setAlert({ type: 'danger', message: data.error || 'Import failed.' });
       }
     } catch (err) {
-      setAlert({ type: 'danger', message: 'Error processing dataset import.' });
+      setAlert({ type: 'danger', message: 'Error processing dataset import: ' + err.message });
     } finally {
       setImporting(false);
     }
@@ -264,16 +290,6 @@ export default function CollegesPage() {
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <a 
-            href="/api/colleges/export" 
-            className="btn btn-secondary btn-sm"
-            download
-            title="Export as CSV"
-          >
-            <Download size={14} />
-            <span>Export CSV</span>
-          </a>
-
           <button 
             onClick={() => { setShowImportModal(true); setImportResult(null); }}
             className="btn btn-secondary btn-sm"
@@ -755,15 +771,15 @@ export default function CollegesPage() {
 
                 {/* File picker */}
                 <div className="form-group">
-                  <label className="form-label">Select CSV File</label>
+                  <label className="form-label">Select Excel (.xlsx, .xls) or CSV File</label>
                   <input
                     type="file"
-                    accept=".csv,.txt"
+                    accept=".xlsx,.xls,.csv,.txt"
                     onChange={(e) => setImportFile(e.target.files?.[0] || null)}
                     className="form-input"
                     style={{ padding: '8px' }}
                   />
-                  <div className="form-hint">Upload a .csv file exported from Excel or Google Sheets.</div>
+                  <div className="form-hint">Upload an official Odisha colleges spreadsheet (.xlsx, .xls) or .csv file.</div>
                 </div>
 
                 <div style={{ textAlign: 'center', color: '#64748B', fontSize: '12px', margin: '-4px 0' }}>

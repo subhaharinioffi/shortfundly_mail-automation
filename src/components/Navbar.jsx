@@ -14,7 +14,8 @@ import {
   LogOut, 
   LogIn, 
   ShieldCheck, 
-  UserCheck 
+  UserCheck,
+  Mail
 } from 'lucide-react';
 import { FilmstripIcon } from './Icons';
 
@@ -29,6 +30,7 @@ export default function Navbar() {
     { label: 'Automated Campaigns', href: '/campaigns', icon: Send },
     { label: 'Direct Send', href: '/manual-send', icon: PenTool },
     { label: 'Outreach Logs', href: '/logs', icon: Activity },
+    { label: 'Inbox View', href: '/inbox-preview', icon: Mail },
     { label: 'Settings', href: '/settings', icon: SettingsIcon },
   ];
 
