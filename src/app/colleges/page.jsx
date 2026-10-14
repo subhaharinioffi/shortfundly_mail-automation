@@ -214,12 +214,12 @@ export default function CollegesPage() {
         formData.append('file', importFile);
         formData.append('mode', importMode);
 
-        res = await fetch('/api/colleges/import', {
+        res = await fetch('/api/colleges?action=import', {
           method: 'POST',
           body: formData,
         });
       } else if (importText && importText.trim()) {
-        res = await fetch(`/api/colleges/import?mode=${encodeURIComponent(importMode)}`, {
+        res = await fetch(`/api/colleges?action=import&mode=${encodeURIComponent(importMode)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'text/csv' },
           body: importText.trim(),
