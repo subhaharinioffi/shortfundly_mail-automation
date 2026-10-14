@@ -5,9 +5,8 @@ const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
   },
-  experimental: {
-    serverComponentsExternalPackages: ['better-sqlite3'],
-  },
+  serverExternalPackages: ['better-sqlite3'],
+  turbopack: {},
   webpack: (config, { isServer, dev }) => {
     if (isServer) {
       config.externals = [...(config.externals || []), 'better-sqlite3'];
