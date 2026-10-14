@@ -26,21 +26,6 @@ export async function GET(req) {
 
     const db = getDb();
 
-    // Check if table is empty and needs self-healing auto-seed
-    const checkEmpty = db.prepare('SELECT count(*) as count FROM colleges').get();
-    if ((!checkEmpty || checkEmpty.count === 0) && Array.isArray(ODISHA_COLLEGES_SEED) && ODISHA_COLLEGES_SEED.length > 0) {
-      const insertCollege = db.prepare(`
-        INSERT OR IGNORE INTO colleges (state, city, college_name, website_url, department, contact_person, email, source_page_url, notes, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'uncontacted')
-      `);
-      const seedTx = db.transaction((items) => {
-        for (const item of items) {
-          insertCollege.run(item.state, item.city, item.college_name, item.website_url, item.department, item.contact_person, item.email, item.source_page_url, item.notes);
-        }
-      });
-      seedTx(ODISHA_COLLEGES_SEED);
-    }
-
     const conditions = [];
     const params = [];
 

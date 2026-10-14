@@ -281,23 +281,6 @@ export function getDb() {
     ensureSchema(db);
 
     global.__dbInstance = db;
-  } else {
-    // If instance exists in warm Lambda, verify colleges table is populated
-    try {
-      const c = global.__dbInstance.prepare('SELECT count(*) as count FROM colleges').get();
-      if ((!c || c.count === 0) && Array.isArray(ODISHA_COLLEGES_SEED) && ODISHA_COLLEGES_SEED.length > 0) {
-        const insertCollege = global.__dbInstance.prepare(`
-          INSERT OR IGNORE INTO colleges (state, city, college_name, website_url, department, contact_person, email, source_page_url, notes, status)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'uncontacted')
-        `);
-        const seedTx = global.__dbInstance.transaction((items) => {
-          for (const item of items) {
-            insertCollege.run(item.state, item.city, item.college_name, item.website_url, item.department, item.contact_person, item.email, item.source_page_url, item.notes);
-          }
-        });
-        seedTx(ODISHA_COLLEGES_SEED);
-      }
-    } catch (_) {}
   }
   return global.__dbInstance;
 }
