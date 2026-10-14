@@ -3,6 +3,7 @@ import Providers from '@/components/Providers';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CinemaBackground from '@/components/CinemaBackground';
+import ProductionSecurityGuard from '@/components/ProductionSecurityGuard';
 
 export const metadata = {
   title: "ShortFundly OTT marketplace - Campus Email Automation",
@@ -17,6 +18,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <Providers>
+          <ProductionSecurityGuard />
           <div className="app-layout">
             <CinemaBackground />
             <Navbar />
