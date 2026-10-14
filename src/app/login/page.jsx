@@ -8,14 +8,14 @@ import { FilmstripIcon, PlayCinemaIcon } from '@/components/Icons';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@shortfundly.com');
-  const [password, setPassword] = useState('Admin@ShortFundly2026');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   // Real-time uppercase and format validation
   const hasUpperCase = /[A-Z]/.test(email);
-  const isValidEmailFormat = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(email.trim());
+  const isValidEmailFormat = !email || /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(email.trim());
 
   const handleLogin = async (e) => {
     e?.preventDefault();
@@ -28,7 +28,7 @@ export default function LoginPage() {
     }
 
     // Client-side format validation gate
-    if (!isValidEmailFormat) {
+    if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(email.trim())) {
       setError('Please enter a valid lowercase email address (e.g. admin@shortfundly.com).');
       return;
     }
@@ -53,12 +53,6 @@ export default function LoginPage() {
       setError('An unexpected error occurred during sign-in.');
       setLoading(false);
     }
-  };
-
-  const selectRolePreset = (presetEmail, presetPass) => {
-    setEmail(presetEmail);
-    setPassword(presetPass);
-    setError('');
   };
 
   return (
@@ -88,39 +82,6 @@ export default function LoginPage() {
             <span>{error}</span>
           </div>
         )}
-
-        {/* Quick 1-Click Role Credentials Selection */}
-        <div style={{ marginBottom: '24px' }}>
-          <label className="form-label" style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Quick Role Selection (3 Accounts)
-          </label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-            <button
-              type="button"
-              onClick={() => selectRolePreset('admin@shortfundly.com', 'Admin@ShortFundly2026')}
-              className={`btn btn-sm ${email === 'admin@shortfundly.com' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ fontSize: '11px', padding: '6px 4px' }}
-            >
-              Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => selectRolePreset('hr@shortfundly.com', 'HR@ShortFundly2026')}
-              className={`btn btn-sm ${email === 'hr@shortfundly.com' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ fontSize: '11px', padding: '6px 4px' }}
-            >
-              HR
-            </button>
-            <button
-              type="button"
-              onClick={() => selectRolePreset('techlead@shortfundly.com', 'TechLead@ShortFundly2026')}
-              className={`btn btn-sm ${email === 'techlead@shortfundly.com' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ fontSize: '11px', padding: '6px 4px' }}
-            >
-              Tech Lead
-            </button>
-          </div>
-        </div>
 
         {/* Login Form */}
         <form onSubmit={handleLogin}>

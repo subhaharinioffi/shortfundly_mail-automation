@@ -17,12 +17,10 @@ dist
 .env.production
 .env.development
 
-# SQLite runtime databases & journal locks
-*.sqlite
+# SQLite runtime journal locks and wal files
 *.sqlite-journal
 *.sqlite-shm
 *.sqlite-wal
-*.db
 
 # Logs
 npm-debug.log*

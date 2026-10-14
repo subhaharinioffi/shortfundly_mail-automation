@@ -7,6 +7,9 @@ const nextConfig = {
   },
   experimental: {
     serverComponentsExternalPackages: ['better-sqlite3'],
+    outputFileTracingIncludes: {
+      '/**': ['./database.sqlite'],
+    },
   },
   webpack: (config, { isServer, dev }) => {
     if (isServer) {
