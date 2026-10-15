@@ -38,6 +38,7 @@ export default function CollegesPage() {
   const [search, setSearch] = useState('');
   const [selectedCity, setSelectedCity] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedPriority, setSelectedPriority] = useState('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -55,6 +56,9 @@ export default function CollegesPage() {
     website_url: '',
     department: '',
     contact_person: '',
+    designation: 'Training & Placement Officer (TPO)',
+    contact_priority: 'High',
+    phone: '',
     email: '',
     source_page_url: '',
     notes: '',
@@ -77,6 +81,7 @@ export default function CollegesPage() {
         search,
         city: selectedCity,
         status: selectedStatus,
+        priority: selectedPriority,
         page: String(page),
         limit: '25',
       });
@@ -88,7 +93,7 @@ export default function CollegesPage() {
         setTotal(data.total || 0);
         setTotalPages(data.totalPages || 1);
         setCities(data.cities || []);
-        setStats(data.stats || { total: 0, sent: 0, uncontacted: 0, failed: 0 });
+        setStats(data.stats || { total: 0, sent: 0, uncontacted: 0, failed: 0, high_priority: 0, medium_priority: 0, low_priority: 0 });
       }
     } catch (err) {
       console.error('Failed to load colleges', err);
@@ -103,7 +108,7 @@ export default function CollegesPage() {
     } else if (status === 'authenticated') {
       fetchColleges();
     }
-  }, [status, search, selectedCity, selectedStatus, page]);
+  }, [status, search, selectedCity, selectedStatus, selectedPriority, page]);
 
   // Handle Add College
   const handleAddSubmit = async (e) => {
@@ -316,7 +321,7 @@ export default function CollegesPage() {
       {/* Stats Summary Bar */}
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', 
         gap: '12px', 
         background: 'var(--bg-card)', 
         padding: '16px 20px', 
@@ -328,15 +333,23 @@ export default function CollegesPage() {
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#FFFFFF' }}>{total}</div>
         </div>
         <div>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase' }}>Colleges Contacted</span>
+          <span style={{ fontSize: '11px', color: '#EF4444', textTransform: 'uppercase', fontWeight: 600 }}>High Priority (TPO / Head)</span>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#EF4444' }}>{stats.high_priority || 0}</div>
+        </div>
+        <div>
+          <span style={{ fontSize: '11px', color: '#F59E0B', textTransform: 'uppercase', fontWeight: 600 }}>Medium (HOD / IIIC)</span>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#F59E0B' }}>{stats.medium_priority || 0}</div>
+        </div>
+        <div>
+          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase' }}>Low (General Admin)</span>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#94A3B8' }}>{stats.low_priority || 0}</div>
+        </div>
+        <div>
+          <span style={{ fontSize: '11px', color: '#10B981', textTransform: 'uppercase' }}>Colleges Contacted</span>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#10B981' }}>{stats.sent || 0}</div>
         </div>
         <div>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase' }}>Pending Uncontacted</span>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#F59E0B' }}>{stats.uncontacted || 0}</div>
-        </div>
-        <div>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase' }}>Covered Cities</span>
+          <span style={{ fontSize: '11px', color: '#06B6D4', textTransform: 'uppercase' }}>Covered Cities</span>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#06B6D4' }}>{cities.length}</div>
         </div>
       </div>
@@ -346,10 +359,10 @@ export default function CollegesPage() {
         <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
           
           {/* Search Box */}
-          <div style={{ flex: '1', minWidth: '260px', position: 'relative' }}>
+          <div style={{ flex: '1', minWidth: '240px', position: 'relative' }}>
             <input
               type="text"
-              placeholder="Search college name, email, department, contact person..."
+              placeholder="Search college, designation, email, HOD, TPO..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               className="form-input"
@@ -358,8 +371,23 @@ export default function CollegesPage() {
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748B' }} />
           </div>
 
+          {/* Contact Priority Filter */}
+          <div style={{ width: '185px' }}>
+            <select
+              value={selectedPriority}
+              onChange={(e) => { setSelectedPriority(e.target.value); setPage(1); }}
+              className="form-select"
+              style={{ fontSize: '13px', fontWeight: 600 }}
+            >
+              <option value="all">All Priorities ({total})</option>
+              <option value="High">High Priority ({stats.high_priority || 0})</option>
+              <option value="Medium">Medium Priority ({stats.medium_priority || 0})</option>
+              <option value="Low">Low Priority ({stats.low_priority || 0})</option>
+            </select>
+          </div>
+
           {/* City Filter */}
-          <div style={{ width: '200px' }}>
+          <div style={{ width: '190px' }}>
             <select
               value={selectedCity}
               onChange={(e) => { setSelectedCity(e.target.value); setPage(1); }}
@@ -374,7 +402,7 @@ export default function CollegesPage() {
           </div>
 
           {/* Status Filter */}
-          <div style={{ width: '180px' }}>
+          <div style={{ width: '170px' }}>
             <select
               value={selectedStatus}
               onChange={(e) => { setSelectedStatus(e.target.value); setPage(1); }}
@@ -389,9 +417,9 @@ export default function CollegesPage() {
           </div>
 
           {/* Reset Filters */}
-          {(search || selectedCity !== 'all' || selectedStatus !== 'all') && (
+          {(search || selectedCity !== 'all' || selectedStatus !== 'all' || selectedPriority !== 'all') && (
             <button
-              onClick={() => { setSearch(''); setSelectedCity('all'); setSelectedStatus('all'); setPage(1); }}
+              onClick={() => { setSearch(''); setSelectedCity('all'); setSelectedStatus('all'); setSelectedPriority('all'); setPage(1); }}
               className="btn btn-secondary btn-sm"
               title="Reset Filters"
             >
@@ -409,10 +437,10 @@ export default function CollegesPage() {
           <thead>
             <tr>
               <th>College &amp; Location</th>
+              <th>Designation &amp; Hierarchy</th>
+              <th>Priority</th>
+              <th>Official Email &amp; Phone</th>
               <th>Official Website</th>
-              <th>Department / Contact</th>
-              <th>Official Email Address</th>
-              <th>Source URL</th>
               <th>Outreach Status</th>
               <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
@@ -430,7 +458,7 @@ export default function CollegesPage() {
                 <td colSpan={7} style={{ textAlign: 'center', padding: '48px 20px', color: '#94A3B8' }}>
                   <GraduationCap size={36} style={{ color: '#64748B', margin: '0 auto 12px' }} />
                   <div style={{ fontSize: '15px', fontWeight: 600, color: '#FFFFFF' }}>No Colleges Found</div>
-                  <div style={{ fontSize: '13px', marginTop: '4px' }}>Try adjusting your search query or upload the official dataset.</div>
+                  <div style={{ fontSize: '13px', marginTop: '4px' }}>Try adjusting your search query or priority filter.</div>
                 </td>
               </tr>
             ) : (
@@ -443,42 +471,51 @@ export default function CollegesPage() {
                     </div>
                   </td>
                   <td>
+                    <div style={{ fontWeight: 600, color: '#E2E8F0' }}>{col.designation || 'Principal'}</div>
+                    <div style={{ fontSize: '12px', color: '#94A3B8' }}>{col.contact_person || 'Head of Institution'}</div>
+                    {col.department && col.department !== col.designation && (
+                      <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>{col.department}</div>
+                    )}
+                  </td>
+                  <td>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '3px 9px',
+                      borderRadius: '9999px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.03em',
+                      background: col.contact_priority === 'High' ? 'rgba(239, 68, 68, 0.15)' : col.contact_priority === 'Medium' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(100, 116, 139, 0.15)',
+                      color: col.contact_priority === 'High' ? '#EF4444' : col.contact_priority === 'Medium' ? '#F59E0B' : '#94A3B8',
+                      border: `1px solid ${col.contact_priority === 'High' ? 'rgba(239, 68, 68, 0.35)' : col.contact_priority === 'Medium' ? 'rgba(245, 158, 11, 0.35)' : 'rgba(100, 116, 139, 0.35)'}`
+                    }}>
+                      {col.contact_priority || 'High'}
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{ fontFamily: 'monospace', color: '#FF6B7E', fontWeight: 600, fontSize: '13px' }}>
+                      {col.email}
+                    </div>
+                    {col.phone && (
+                      <div style={{ fontSize: '12px', color: '#10B981', marginTop: '3px' }}>
+                        {col.phone}
+                      </div>
+                    )}
+                  </td>
+                  <td>
                     {col.website_url ? (
                       <a 
                         href={col.website_url} 
                         target="_blank" 
                         rel="noreferrer" 
-                        style={{ color: '#06B6D4', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}
+                        style={{ color: '#06B6D4', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', fontSize: '12px' }}
                       >
                         <span>{col.website_url.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
                         <ExternalLink size={12} />
                       </a>
                     ) : (
-                      <span style={{ color: '#64748B' }}>Not listed</span>
-                    )}
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 500 }}>{col.contact_person || 'Coordinator / Principal'}</div>
-                    <div style={{ fontSize: '11px', color: '#94A3B8' }}>{col.department || 'Academic & Student Affairs'}</div>
-                  </td>
-                  <td>
-                    <div style={{ fontFamily: 'monospace', color: '#FF6B7E', fontWeight: 600 }}>
-                      {col.email}
-                    </div>
-                  </td>
-                  <td>
-                    {col.source_page_url ? (
-                      <a 
-                        href={col.source_page_url} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        style={{ color: '#94A3B8', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', fontSize: '12px' }}
-                      >
-                        <span>Official Source</span>
-                        <ExternalLink size={11} />
-                      </a>
-                    ) : (
-                      <span style={{ color: '#64748B', fontSize: '12px' }}>Verified</span>
+                      <span style={{ color: '#64748B', fontSize: '12px' }}>Not listed</span>
                     )}
                   </td>
                   <td>
@@ -495,7 +532,7 @@ export default function CollegesPage() {
                     <div style={{ display: 'inline-flex', gap: '6px' }}>
                       {/* Send Customized Direct Email */}
                       <Link
-                        href={`/manual-send?name=${encodeURIComponent(col.college_name)}&email=${encodeURIComponent(col.email)}&city=${encodeURIComponent(col.city)}&dept=${encodeURIComponent(col.department || '')}&contact=${encodeURIComponent(col.contact_person || '')}&web=${encodeURIComponent(col.website_url || '')}`}
+                        href={`/manual-send?name=${encodeURIComponent(col.college_name)}&email=${encodeURIComponent(col.email)}&city=${encodeURIComponent(col.city)}&dept=${encodeURIComponent(col.department || '')}&contact=${encodeURIComponent(col.contact_person || '')}&desig=${encodeURIComponent(col.designation || '')}&web=${encodeURIComponent(col.website_url || '')}`}
                         className="btn btn-secondary btn-sm"
                         title="Send Customized Email"
                         style={{ padding: '6px 8px' }}
@@ -515,12 +552,12 @@ export default function CollegesPage() {
 
                       {/* Delete */}
                       <button
-                        onClick={() => handleDelete(col.id, col.college_name)}
-                        className="btn btn-danger btn-sm"
-                        title="Delete Record"
+                        onClick={() => handleDeleteCollege(col.id, col.college_name)}
+                        className="btn btn-secondary btn-sm"
+                        title="Delete College"
                         style={{ padding: '6px 8px' }}
                       >
-                        <Trash2 size={13} />
+                        <Trash2 size={13} color="#EF4444" />
                       </button>
                     </div>
                   </td>
@@ -661,11 +698,53 @@ export default function CollegesPage() {
 
                   <div className="form-group">
                     <label className="form-label">
+                      Designation / Role <span className="required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Training & Placement Officer (TPO)"
+                      value={formData.designation}
+                      onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">
+                      Contact Priority <span className="required">*</span>
+                    </label>
+                    <select
+                      value={formData.contact_priority}
+                      onChange={(e) => setFormData({ ...formData, contact_priority: e.target.value })}
+                      className="form-select"
+                    >
+                      <option value="High">High (TPO, Placement Head, Principal, DSW)</option>
+                      <option value="Medium">Medium (HOD, Coordinator, IIIC)</option>
+                      <option value="Low">Low (Administrative Office / Inquiries)</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">
+                      Contact Phone
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. +91 9437012345"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">
                       Department
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Department of Mass Media / Dean Student Affairs"
+                      placeholder="e.g. Department of Mass Media / Placement Cell"
                       value={formData.department}
                       onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                       className="form-input"
@@ -935,6 +1014,39 @@ export default function CollegesPage() {
                       type="url"
                       value={currentEdit.source_page_url || ''}
                       onChange={(e) => setCurrentEdit({ ...currentEdit, source_page_url: e.target.value })}
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Designation / Role</label>
+                    <input
+                      type="text"
+                      value={currentEdit.designation || ''}
+                      onChange={(e) => setCurrentEdit({ ...currentEdit, designation: e.target.value })}
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Contact Priority</label>
+                    <select
+                      value={currentEdit.contact_priority || 'High'}
+                      onChange={(e) => setCurrentEdit({ ...currentEdit, contact_priority: e.target.value })}
+                      className="form-select"
+                    >
+                      <option value="High">High (TPO, Placement Head, Principal, DSW)</option>
+                      <option value="Medium">Medium (HOD, Coordinator, IIIC)</option>
+                      <option value="Low">Low (Administrative Office / Inquiries)</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Contact Phone</label>
+                    <input
+                      type="text"
+                      value={currentEdit.phone || ''}
+                      onChange={(e) => setCurrentEdit({ ...currentEdit, phone: e.target.value })}
                       className="form-input"
                     />
                   </div>

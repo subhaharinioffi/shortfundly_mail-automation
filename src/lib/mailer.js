@@ -90,8 +90,10 @@ export function personalizeText(text, variables = {}) {
     '\\[College Name\\]': variables.college_name || 'your institution',
     '\\[City\\]': variables.city || 'Odisha',
     '\\[Department\\]': variables.department || 'Academic & Creative Affairs',
-    '\\[Recipient Name\\]': variables.contact_person || 'Sir/Madam',
-    '\\[Contact Person\\]': variables.contact_person || 'Sir/Madam',
+    '\\[Recipient Name\\]': variables.contact_person || variables.designation || 'Sir/Madam',
+    '\\[Contact Person\\]': variables.contact_person || variables.designation || 'Sir/Madam',
+    '\\[Designation\\]': variables.designation || 'Training & Placement Officer (TPO)',
+    '\\[Role\\]': variables.designation || 'Training & Placement Officer (TPO)',
     '\\[Official Website\\]': variables.website_url || 'https://campus.shortfundly.com',
     '\\[Your Name\\]': variables.sender_name || 'Shortfundly Team',
     '\\[Your Role\\]': variables.sender_role || 'Product Manager | Shortfundly'

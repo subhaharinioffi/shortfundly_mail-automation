@@ -84,7 +84,10 @@ export async function POST(req) {
           college_name: college.college_name,
           city: college.city,
           department: college.department || 'Academic & Creative Affairs',
-          contact_person: college.contact_person || 'Sir/Madam',
+          contact_person: college.contact_person || college.designation || 'Sir/Madam',
+          designation: college.designation || 'Training & Placement Officer (TPO)',
+          role: college.designation || 'Training & Placement Officer (TPO)',
+          phone: college.phone || '',
           website_url: college.website_url,
           sender_name: finalSenderName,
           sender_role: 'Product Manager | Shortfundly'
