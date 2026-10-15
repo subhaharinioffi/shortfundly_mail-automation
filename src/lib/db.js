@@ -61,9 +61,6 @@ function ensureSchema(db) {
       website_url TEXT NOT NULL,
       department TEXT,
       contact_person TEXT,
-      designation TEXT DEFAULT 'Principal',
-      contact_priority TEXT DEFAULT 'High',
-      phone TEXT,
       email TEXT NOT NULL UNIQUE COLLATE NOCASE,
       source_page_url TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'uncontacted' CHECK(status IN ('uncontacted', 'sent', 'failed', 'pending')),
@@ -75,15 +72,7 @@ function ensureSchema(db) {
     CREATE INDEX IF NOT EXISTS idx_colleges_email ON colleges(email);
     CREATE INDEX IF NOT EXISTS idx_colleges_city ON colleges(city);
     CREATE INDEX IF NOT EXISTS idx_colleges_status ON colleges(status);
-    CREATE INDEX IF NOT EXISTS idx_colleges_priority ON colleges(contact_priority);
   `);
-
-  try {
-    const tableCols = db.prepare("PRAGMA table_info(colleges)").all().map(c => c.name);
-    if (!tableCols.includes('designation')) db.exec("ALTER TABLE colleges ADD COLUMN designation TEXT DEFAULT 'Principal'");
-    if (!tableCols.includes('contact_priority')) db.exec("ALTER TABLE colleges ADD COLUMN contact_priority TEXT DEFAULT 'High'");
-    if (!tableCols.includes('phone')) db.exec("ALTER TABLE colleges ADD COLUMN phone TEXT");
-  } catch (_) {}
 
   // 3. Email Templates Table
   db.exec(`
@@ -214,26 +203,13 @@ Product Manager | Shortfundly`;
   const collegeCount = db.prepare('SELECT count(*) as count FROM colleges').get();
   if ((!collegeCount || collegeCount.count === 0) && Array.isArray(ODISHA_COLLEGES_SEED) && ODISHA_COLLEGES_SEED.length > 0) {
     const insertCollege = db.prepare(`
-      INSERT OR IGNORE INTO colleges (state, city, college_name, website_url, department, contact_person, designation, contact_priority, phone, email, source_page_url, notes, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'uncontacted')
+      INSERT OR IGNORE INTO colleges (state, city, college_name, website_url, department, contact_person, email, source_page_url, notes, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'uncontacted')
     `);
 
     const seedTx = db.transaction((items) => {
       for (const c of items) {
-        insertCollege.run(
-          c.state || 'Odisha',
-          c.city || '',
-          c.college_name || '',
-          c.website_url || '',
-          c.department || '',
-          c.contact_person || '',
-          c.designation || 'Principal',
-          c.contact_priority || 'High',
-          c.phone || '',
-          c.email,
-          c.source_page_url || '',
-          c.notes || ''
-        );
+        insertCollege.run(c.state, c.city, c.college_name, c.website_url, c.department, c.contact_person, c.email, c.source_page_url, c.notes);
       }
     });
     seedTx(ODISHA_COLLEGES_SEED);

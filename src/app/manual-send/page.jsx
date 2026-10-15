@@ -35,8 +35,6 @@ function ManualSendContent() {
   const [recipientEmail, setRecipientEmail] = useState('');
   const [department, setDepartment] = useState('');
   const [contactPerson, setContactPerson] = useState('');
-  const [designation, setDesignation] = useState('');
-  const [phone, setPhone] = useState('');
   const [websiteUrl, setWebsiteUrl] = useState('');
 
   // Email Content
@@ -59,8 +57,6 @@ function ManualSendContent() {
     const qCity = searchParams.get('city');
     const qDept = searchParams.get('dept');
     const qContact = searchParams.get('contact');
-    const qDesig = searchParams.get('desig');
-    const qPhone = searchParams.get('phone');
     const qWeb = searchParams.get('web');
 
     if (qName) setCollegeName(qName);
@@ -68,8 +64,6 @@ function ManualSendContent() {
     if (qCity) setCity(qCity);
     if (qDept) setDepartment(qDept);
     if (qContact) setContactPerson(qContact);
-    if (qDesig) setDesignation(qDesig);
-    if (qPhone) setPhone(qPhone);
     if (qWeb) setWebsiteUrl(qWeb);
   }, [searchParams]);
 
@@ -89,9 +83,8 @@ function ManualSendContent() {
           .replace(/\[College Name\]/gi, cName)
           .replace(/\[City\]/gi, city || 'Odisha')
           .replace(/\[Department\]/gi, department || 'Academic & Creative Affairs')
-          .replace(/\[Recipient Name\]/gi, contactPerson || designation || 'Sir/Madam')
-          .replace(/\[Contact Person\]/gi, contactPerson || designation || 'Sir/Madam')
-          .replace(/\[Designation\]/gi, designation || 'Training & Placement Head')
+          .replace(/\[Recipient Name\]/gi, contactPerson || 'Sir/Madam')
+          .replace(/\[Contact Person\]/gi, contactPerson || 'Sir/Madam')
           .replace(/\[Your Name\]/gi, session?.user?.name || senderName)
           .replace(/\[Your Role\]/gi, 'Product Manager | Shortfundly');
 
@@ -130,8 +123,6 @@ function ManualSendContent() {
         city: city.trim(),
         department: department.trim() || null,
         contactPerson: contactPerson.trim() || null,
-        designation: designation.trim() || null,
-        phone: phone.trim() || null,
         websiteUrl: websiteUrl.trim() || '',
         recipientEmail: recipientEmail.trim().toLowerCase(),
         subject: subject.trim(),
@@ -265,7 +256,7 @@ function ManualSendContent() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Department / Office</label>
                   <input
@@ -283,29 +274,6 @@ function ManualSendContent() {
                     placeholder="e.g. Prof. Asit Mohanty"
                     value={contactPerson}
                     onChange={(e) => setContactPerson(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">Designation / Role</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Training &amp; Placement Officer (TPO)"
-                    value={designation}
-                    onChange={(e) => setDesignation(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">Contact Phone</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. +91 9437012345"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
                     className="form-input"
                   />
                 </div>

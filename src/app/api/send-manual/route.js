@@ -17,8 +17,6 @@ export async function POST(req) {
       city = 'Odisha',
       department,
       contactPerson,
-      designation = 'Principal',
-      phone = '',
       websiteUrl = '',
       recipientEmail,
       subject,
@@ -47,16 +45,14 @@ export async function POST(req) {
     } else if (saveToColleges) {
       // Save new college into directory
       const insert = db.prepare(`
-        INSERT INTO colleges (state, city, college_name, website_url, department, contact_person, designation, contact_priority, phone, email, source_page_url, status)
-        VALUES ('Odisha', ?, ?, ?, ?, ?, ?, 'High', ?, ?, ?, 'pending')
+        INSERT INTO colleges (state, city, college_name, website_url, department, contact_person, email, source_page_url, status)
+        VALUES ('Odisha', ?, ?, ?, ?, ?, ?, ?, 'pending')
       `).run(
         city || 'Odisha',
         collegeName.trim(),
         websiteUrl || '',
         department || null,
         contactPerson || null,
-        designation || 'Principal',
-        phone || '',
         recipientEmail.trim().toLowerCase(),
         websiteUrl || 'Manual Entry'
       );
@@ -79,8 +75,7 @@ export async function POST(req) {
         college_name: collegeName.trim(),
         city: city || 'Odisha',
         department: department || 'Academic & Creative Affairs',
-        contact_person: contactPerson || designation || 'Sir/Madam',
-        designation: designation || 'Training & Placement Officer (TPO)',
+        contact_person: contactPerson || 'Sir/Madam',
         website_url: websiteUrl || '',
         sender_name: finalSenderName,
         sender_role: 'Product Manager | Shortfundly'

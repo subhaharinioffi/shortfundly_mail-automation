@@ -38,7 +38,6 @@ export default function CampaignsPage() {
   // Filters
   const [filterCity, setFilterCity] = useState('all');
   const [filterStatus, setFilterStatus] = useState('uncontacted'); // default target uncontacted!
-  const [filterPriority, setFilterPriority] = useState('all');
   const [search, setSearch] = useState('');
 
   // Selected Colleges
@@ -121,14 +120,11 @@ export default function CampaignsPage() {
   const filteredColleges = colleges.filter((col) => {
     if (filterCity !== 'all' && col.city !== filterCity) return false;
     if (filterStatus !== 'all' && col.status !== filterStatus) return false;
-    if (filterPriority !== 'all' && col.contact_priority !== filterPriority) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
       return (
         col.college_name.toLowerCase().includes(q) ||
         col.email.toLowerCase().includes(q) ||
-        (col.designation && col.designation.toLowerCase().includes(q)) ||
-        (col.contact_person && col.contact_person.toLowerCase().includes(q)) ||
         (col.department && col.department.toLowerCase().includes(q))
       );
     }
@@ -146,11 +142,6 @@ export default function CampaignsPage() {
   const selectBatch = (count) => {
     const slice = filteredColleges.slice(0, count);
     setSelectedIds(new Set(slice.map(c => c.id)));
-  };
-
-  const selectPriorityOnly = (prio) => {
-    const matching = filteredColleges.filter(c => (c.contact_priority || 'High') === prio);
-    setSelectedIds(new Set(matching.map(c => c.id)));
   };
 
   const selectAllFiltered = () => {
@@ -370,26 +361,15 @@ export default function CampaignsPage() {
           </div>
 
           {/* Filter Toolbar */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 1fr 0.9fr', gap: '8px', marginBottom: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 0.9fr', gap: '10px', marginBottom: '12px' }}>
             <input
               type="text"
-              placeholder="Search college, designation, TPO..."
+              placeholder="Search college, email, city..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="form-input"
               style={{ fontSize: '12px' }}
             />
-            <select
-              value={filterPriority}
-              onChange={(e) => setFilterPriority(e.target.value)}
-              className="form-select"
-              style={{ fontSize: '12px', fontWeight: 600 }}
-            >
-              <option value="all">All Priorities</option>
-              <option value="High">High Priority (TPO &amp; Heads)</option>
-              <option value="Medium">Medium (HODs &amp; Cells)</option>
-              <option value="Low">Low (General Admin)</option>
-            </select>
             <select
               value={filterCity}
               onChange={(e) => setFilterCity(e.target.value)}
@@ -444,15 +424,6 @@ export default function CampaignsPage() {
               <span style={{ color: '#94A3B8', fontWeight: 600 }}>Quick Select:</span>
               <button
                 type="button"
-                onClick={() => selectPriorityOnly('High')}
-                className="btn btn-secondary btn-sm"
-                style={{ padding: '3px 8px', fontSize: '11px', color: '#EF4444', borderColor: 'rgba(239, 68, 68, 0.4)' }}
-                title="Select all TPO, Placement Heads, and Decision Makers"
-              >
-                High Priority ({colleges.filter(c => (c.contact_priority || 'High') === 'High').length})
-              </button>
-              <button
-                type="button"
                 onClick={() => selectBatch(25)}
                 className="btn btn-secondary btn-sm"
                 style={{ padding: '3px 8px', fontSize: '11px' }}
@@ -482,6 +453,14 @@ export default function CampaignsPage() {
                 style={{ padding: '3px 8px', fontSize: '11px' }}
               >
                 First 250
+              </button>
+              <button
+                type="button"
+                onClick={() => selectBatch(500)}
+                className="btn btn-secondary btn-sm"
+                style={{ padding: '3px 8px', fontSize: '11px' }}
+              >
+                First 500
               </button>
               <button
                 type="button"
@@ -554,28 +533,12 @@ export default function CampaignsPage() {
                         #{index + 1}
                       </span>
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '13px', fontWeight: 600, color: isSelected ? '#FFFFFF' : '#CBD5E1' }}>
-                            {col.college_name}
-                          </span>
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            padding: '1px 6px',
-                            borderRadius: '4px',
-                            fontSize: '10px',
-                            fontWeight: 700,
-                            background: col.contact_priority === 'High' ? 'rgba(239, 68, 68, 0.15)' : col.contact_priority === 'Medium' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(100, 116, 139, 0.15)',
-                            color: col.contact_priority === 'High' ? '#EF4444' : col.contact_priority === 'Medium' ? '#F59E0B' : '#94A3B8',
-                            border: `1px solid ${col.contact_priority === 'High' ? 'rgba(239, 68, 68, 0.35)' : col.contact_priority === 'Medium' ? 'rgba(245, 158, 11, 0.35)' : 'rgba(100, 116, 139, 0.35)'}`
-                          }}>
-                            {col.contact_priority || 'High'}
-                          </span>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: isSelected ? '#FFFFFF' : '#CBD5E1' }}>
+                          {col.college_name}
                         </div>
-                        <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px' }}>
-                          <span style={{ color: '#E2E8F0', fontWeight: 500 }}>{col.designation || 'Principal'}</span>
-                          {col.contact_person && col.contact_person !== col.designation ? ` (${col.contact_person})` : ''} • {col.city} • <span style={{ fontFamily: 'monospace', color: '#FF6B7E' }}>{col.email}</span>
-                          {col.phone ? <span style={{ color: '#10B981' }}> • {col.phone}</span> : null}
+                        <div style={{ fontSize: '11px', color: '#94A3B8' }}>
+                          {col.city} • <span style={{ fontFamily: 'monospace', color: '#FF6B7E' }}>{col.email}</span>
+                          {col.department ? <span style={{ color: '#64748B' }}> • {col.department}</span> : null}
                         </div>
                       </div>
                     </div>

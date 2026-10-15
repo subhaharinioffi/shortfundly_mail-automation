@@ -20,7 +20,6 @@ export async function GET(req) {
     const search = searchParams.get('search') || '';
     const city = searchParams.get('city') || '';
     const status = searchParams.get('status') || '';
-    const priority = searchParams.get('priority') || '';
     const page = parseInt(searchParams.get('page') || '1', 10);
     const rawLimit = searchParams.get('limit');
     let limit;
@@ -38,9 +37,9 @@ export async function GET(req) {
     const params = [];
 
     if (search.trim()) {
-      conditions.push('(college_name LIKE ? OR email LIKE ? OR department LIKE ? OR contact_person LIKE ? OR designation LIKE ?)');
+      conditions.push('(college_name LIKE ? OR email LIKE ? OR department LIKE ? OR contact_person LIKE ?)');
       const pattern = `%${search.trim()}%`;
-      params.push(pattern, pattern, pattern, pattern, pattern);
+      params.push(pattern, pattern, pattern, pattern);
     }
 
     if (city.trim() && city !== 'all') {
@@ -53,11 +52,6 @@ export async function GET(req) {
       params.push(status.trim());
     }
 
-    if (priority.trim() && priority !== 'all') {
-      conditions.push('contact_priority = ?');
-      params.push(priority.trim());
-    }
-
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     const totalStmt = db.prepare(`SELECT count(*) as count FROM colleges ${whereClause}`);
@@ -67,13 +61,7 @@ export async function GET(req) {
     const listStmt = db.prepare(`
       SELECT * FROM colleges
       ${whereClause}
-      ORDER BY 
-        CASE 
-          WHEN contact_priority = 'High' THEN 1
-          WHEN contact_priority = 'Medium' THEN 2
-          ELSE 3
-        END ASC,
-        id DESC
+      ORDER BY id DESC
       LIMIT ? OFFSET ?
     `);
     const colleges = listStmt.all(...params, limit, offset);
@@ -85,12 +73,9 @@ export async function GET(req) {
         COUNT(*) as total,
         SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as sent,
         SUM(CASE WHEN status = 'uncontacted' THEN 1 ELSE 0 END) as uncontacted,
-        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
-        SUM(CASE WHEN contact_priority = 'High' THEN 1 ELSE 0 END) as high_priority,
-        SUM(CASE WHEN contact_priority = 'Medium' THEN 1 ELSE 0 END) as medium_priority,
-        SUM(CASE WHEN contact_priority = 'Low' THEN 1 ELSE 0 END) as low_priority
+        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed
       FROM colleges
-    `).get() || { total: 0, sent: 0, uncontacted: 0, failed: 0, high_priority: 0, medium_priority: 0, low_priority: 0 };
+    `).get() || { total: 0, sent: 0, uncontacted: 0, failed: 0 };
 
     return NextResponse.json({
       colleges,
@@ -104,9 +89,6 @@ export async function GET(req) {
         sent: stats.sent || 0,
         uncontacted: stats.uncontacted || 0,
         failed: stats.failed || 0,
-        high_priority: stats.high_priority || 0,
-        medium_priority: stats.medium_priority || 0,
-        low_priority: stats.low_priority || 0,
       },
     });
   } catch (error) {
@@ -219,8 +201,8 @@ export async function POST(req) {
       const seenInBatch = new Set();
 
       const insertStmt = db.prepare(`
-        INSERT INTO colleges (state, city, college_name, website_url, department, contact_person, designation, contact_priority, phone, email, source_page_url, notes, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'uncontacted')
+        INSERT INTO colleges (state, city, college_name, website_url, department, contact_person, email, source_page_url, notes, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'uncontacted')
       `);
 
       const updateStmt = db.prepare(`
@@ -231,9 +213,6 @@ export async function POST(req) {
           website_url = ?,
           department = ?,
           contact_person = ?,
-          designation = ?,
-          contact_priority = ?,
-          phone = ?,
           source_page_url = ?,
           notes = ?,
           updated_at = CURRENT_TIMESTAMP
@@ -324,77 +303,6 @@ export async function POST(req) {
             ''
           ).trim() || null;
 
-          const rawDesig = (
-            row['Designation'] || 
-            row['designation'] || 
-            row['DESIGNATION'] || 
-            row['Role'] || 
-            row['ROLE'] || 
-            ''
-          ).trim();
-
-          const rawPrio = (
-            row['Contact Priority'] || 
-            row['contact_priority'] || 
-            row['Priority'] || 
-            row['priority'] || 
-            row['PRIORITY'] || 
-            ''
-          ).trim();
-
-          const phone = (
-            row['Contact Phone'] || 
-            row['Phone'] || 
-            row['phone'] || 
-            row['PHONE'] || 
-            row['Contact Number'] || 
-            row['Mobile'] || 
-            ''
-          ).trim();
-
-          let designation = rawDesig;
-          let contact_priority = rawPrio;
-
-          if (!designation) {
-            const eLow = email.toLowerCase();
-            const pLow = (contact_person || '').toLowerCase();
-            if (eLow.includes('tpo') || eLow.includes('placement') || pLow.includes('tpo') || pLow.includes('placement')) {
-              designation = 'Training & Placement Officer (TPO)';
-              contact_priority = contact_priority || 'High';
-            } else if (eLow.includes('dsw') || pLow.includes('student welfare')) {
-              designation = 'Dean - Student Welfare';
-              contact_priority = contact_priority || 'High';
-            } else if (eLow.includes('registrar') || pLow.includes('registrar')) {
-              designation = 'Registrar';
-              contact_priority = contact_priority || 'High';
-            } else if (eLow.includes('director') || pLow.includes('director')) {
-              designation = 'Director';
-              contact_priority = contact_priority || 'High';
-            } else if (eLow.includes('principal') || pLow.includes('principal')) {
-              designation = 'Principal';
-              contact_priority = contact_priority || 'High';
-            } else if (eLow.includes('hod') || pLow.includes('hod')) {
-              designation = 'Head of Department (HOD)';
-              contact_priority = contact_priority || 'Medium';
-            } else if (eLow.includes('info@') || eLow.includes('contact@') || eLow.includes('office@')) {
-              designation = 'Administrative Office / General Inquiries';
-              contact_priority = contact_priority || 'Low';
-            } else {
-              designation = 'Principal';
-              contact_priority = contact_priority || 'High';
-            }
-          }
-
-          if (!contact_priority) {
-            if (designation.includes('TPO') || designation.includes('Placement') || designation.includes('Student Welfare') || designation.includes('Principal') || designation.includes('Director') || designation.includes('Registrar')) {
-              contact_priority = 'High';
-            } else if (designation.includes('HOD') || designation.includes('Coordinator')) {
-              contact_priority = 'Medium';
-            } else {
-              contact_priority = 'Low';
-            }
-          }
-
           const source_page_url = (
             row['Email Source'] || 
             row['Source page URL'] || 
@@ -433,9 +341,6 @@ export async function POST(req) {
               website_url,
               department,
               contact_person,
-              designation,
-              contact_priority,
-              phone,
               source_page_url,
               notes,
               email
@@ -449,9 +354,6 @@ export async function POST(req) {
               website_url,
               department,
               contact_person,
-              designation,
-              contact_priority,
-              phone,
               email,
               source_page_url,
               notes
@@ -482,20 +384,7 @@ export async function POST(req) {
 
     // Handle Single College Creation
     const body = await req.json();
-    const {
-      state,
-      city,
-      college_name,
-      website_url,
-      department,
-      contact_person,
-      designation = 'Principal',
-      contact_priority = 'High',
-      phone = '',
-      email,
-      source_page_url,
-      notes
-    } = body;
+    const { state, city, college_name, website_url, department, contact_person, email, source_page_url, notes } = body;
 
     if (!college_name || !city || !email) {
       return NextResponse.json({ error: 'College Name, City, and Official Email are required fields.' }, { status: 400 });
@@ -516,8 +405,8 @@ export async function POST(req) {
     }
 
     const insert = db.prepare(`
-      INSERT INTO colleges (state, city, college_name, website_url, department, contact_person, designation, contact_priority, phone, email, source_page_url, notes, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'uncontacted')
+      INSERT INTO colleges (state, city, college_name, website_url, department, contact_person, email, source_page_url, notes, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'uncontacted')
     `);
 
     const result = insert.run(
@@ -527,9 +416,6 @@ export async function POST(req) {
       website_url?.trim() || '',
       department?.trim() || null,
       contact_person?.trim() || null,
-      designation?.trim() || 'Principal',
-      contact_priority?.trim() || 'High',
-      phone?.trim() || '',
       email.trim().toLowerCase(),
       source_page_url?.trim() || '',
       notes?.trim() || null
@@ -551,22 +437,7 @@ export async function PATCH(req) {
     }
 
     const body = await req.json();
-    const {
-      id,
-      state,
-      city,
-      college_name,
-      website_url,
-      department,
-      contact_person,
-      designation,
-      contact_priority,
-      phone,
-      email,
-      source_page_url,
-      notes,
-      status
-    } = body;
+    const { id, state, city, college_name, website_url, department, contact_person, email, source_page_url, notes, status } = body;
 
     if (!id || !college_name || !city || !email) {
       return NextResponse.json({ error: 'ID, College Name, City, and Official Email are required.' }, { status: 400 });
@@ -581,7 +452,7 @@ export async function PATCH(req) {
 
     const update = db.prepare(`
       UPDATE colleges
-      SET state = ?, city = ?, college_name = ?, website_url = ?, department = ?, contact_person = ?, designation = ?, contact_priority = ?, phone = ?, email = ?, source_page_url = ?, notes = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+      SET state = ?, city = ?, college_name = ?, website_url = ?, department = ?, contact_person = ?, email = ?, source_page_url = ?, notes = ?, status = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `);
 
@@ -592,9 +463,6 @@ export async function PATCH(req) {
       website_url || '',
       department || null,
       contact_person || null,
-      designation || 'Principal',
-      contact_priority || 'High',
-      phone || '',
       email.trim().toLowerCase(),
       source_page_url || '',
       notes || null,

@@ -121,8 +121,8 @@ export async function POST(req) {
     const seenInBatch = new Set();
 
     const insertStmt = db.prepare(`
-      INSERT INTO colleges (state, city, college_name, website_url, department, contact_person, designation, contact_priority, phone, email, source_page_url, notes, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'uncontacted')
+      INSERT INTO colleges (state, city, college_name, website_url, department, contact_person, email, source_page_url, notes, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'uncontacted')
     `);
 
     const updateStmt = db.prepare(`
@@ -133,9 +133,6 @@ export async function POST(req) {
         website_url = ?,
         department = ?,
         contact_person = ?,
-        designation = ?,
-        contact_priority = ?,
-        phone = ?,
         source_page_url = ?,
         notes = ?,
         updated_at = CURRENT_TIMESTAMP
@@ -228,77 +225,6 @@ export async function POST(req) {
           ''
         ).trim() || null;
 
-        const rawDesig = (
-          row['Designation'] || 
-          row['designation'] || 
-          row['DESIGNATION'] || 
-          row['Role'] || 
-          row['ROLE'] || 
-          ''
-        ).trim();
-
-        const rawPrio = (
-          row['Contact Priority'] || 
-          row['contact_priority'] || 
-          row['Priority'] || 
-          row['priority'] || 
-          row['PRIORITY'] || 
-          ''
-        ).trim();
-
-        const phone = (
-          row['Contact Phone'] || 
-          row['Phone'] || 
-          row['phone'] || 
-          row['PHONE'] || 
-          row['Contact Number'] || 
-          row['Mobile'] || 
-          ''
-        ).trim();
-
-        let designation = rawDesig;
-        let contact_priority = rawPrio;
-
-        if (!designation) {
-          const eLow = email.toLowerCase();
-          const pLow = (contact_person || '').toLowerCase();
-          if (eLow.includes('tpo') || eLow.includes('placement') || pLow.includes('tpo') || pLow.includes('placement')) {
-            designation = 'Training & Placement Officer (TPO)';
-            contact_priority = contact_priority || 'High';
-          } else if (eLow.includes('dsw') || pLow.includes('student welfare')) {
-            designation = 'Dean - Student Welfare';
-            contact_priority = contact_priority || 'High';
-          } else if (eLow.includes('registrar') || pLow.includes('registrar')) {
-            designation = 'Registrar';
-            contact_priority = contact_priority || 'High';
-          } else if (eLow.includes('director') || pLow.includes('director')) {
-            designation = 'Director';
-            contact_priority = contact_priority || 'High';
-          } else if (eLow.includes('principal') || pLow.includes('principal')) {
-            designation = 'Principal';
-            contact_priority = contact_priority || 'High';
-          } else if (eLow.includes('hod') || pLow.includes('hod')) {
-            designation = 'Head of Department (HOD)';
-            contact_priority = contact_priority || 'Medium';
-          } else if (eLow.includes('info@') || eLow.includes('contact@') || eLow.includes('office@')) {
-            designation = 'Administrative Office / General Inquiries';
-            contact_priority = contact_priority || 'Low';
-          } else {
-            designation = 'Principal';
-            contact_priority = contact_priority || 'High';
-          }
-        }
-
-        if (!contact_priority) {
-          if (designation.includes('TPO') || designation.includes('Placement') || designation.includes('Student Welfare') || designation.includes('Principal') || designation.includes('Director') || designation.includes('Registrar')) {
-            contact_priority = 'High';
-          } else if (designation.includes('HOD') || designation.includes('Coordinator')) {
-            contact_priority = 'Medium';
-          } else {
-            contact_priority = 'Low';
-          }
-        }
-
         const source_page_url = (
           row['Email Source'] || 
           row['Source page URL'] || 
@@ -339,9 +265,6 @@ export async function POST(req) {
             website_url,
             department,
             contact_person,
-            designation,
-            contact_priority,
-            phone,
             source_page_url,
             notes,
             email
@@ -356,9 +279,6 @@ export async function POST(req) {
             website_url,
             department,
             contact_person,
-            designation,
-            contact_priority,
-            phone,
             email,
             source_page_url,
             notes
