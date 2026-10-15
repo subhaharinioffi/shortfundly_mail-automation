@@ -1,6 +1,7 @@
 import CredentialsModule from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { getDb } from './db.js';
+import { verifyCaptcha } from './captcha.js';
 
 const CredentialsProvider = typeof CredentialsModule === 'function' 
   ? CredentialsModule 
@@ -62,10 +63,18 @@ export const authOptions = {
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
+        captcha: { label: 'Security CAPTCHA', type: 'text' },
+        captchaToken: { label: 'Captcha Token', type: 'text' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Email and password required');
+        }
+
+        // Strict Check 0: Security CAPTCHA verification
+        const captchaCheck = verifyCaptcha(credentials?.captcha, credentials?.captchaToken);
+        if (!captchaCheck.valid) {
+          throw new Error(captchaCheck.message);
         }
 
         const rawEmail = String(credentials.email).trim();

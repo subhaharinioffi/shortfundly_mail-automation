@@ -1,21 +1,48 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, Lock, Mail, ArrowRight, AlertCircle, AlertTriangle, Sparkles, CheckCircle2 } from 'lucide-react';
-import { FilmstripIcon, PlayCinemaIcon } from '@/components/Icons';
+import { ShieldCheck, Lock, Mail, AlertCircle, AlertTriangle, RotateCw, KeyRound } from 'lucide-react';
+import { PlayCinemaIcon } from '@/components/Icons';
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [captchaSvg, setCaptchaSvg] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaLoading, setCaptchaLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   // Real-time uppercase and format validation
   const hasUpperCase = /[A-Z]/.test(email);
   const isValidEmailFormat = !email || /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(email.trim());
+
+  const fetchCaptcha = async () => {
+    setCaptchaLoading(true);
+    try {
+      const res = await fetch(`/api/auth/captcha?t=${Date.now()}`, {
+        cache: 'no-store'
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCaptchaSvg(data.svg);
+        setCaptchaToken(data.token);
+        setCaptchaInput('');
+      }
+    } catch (err) {
+      console.error('Failed to load CAPTCHA challenge:', err);
+    } finally {
+      setCaptchaLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCaptcha();
+  }, []);
 
   const handleLogin = async (e) => {
     e?.preventDefault();
@@ -33,18 +60,27 @@ export default function LoginPage() {
       return;
     }
 
+    // Client-side CAPTCHA validation gate
+    if (!captchaInput.trim()) {
+      setError('Please enter the security verification CAPTCHA characters.');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await signIn('credentials', {
         email: email.trim(),
         password,
+        captcha: captchaInput.trim(),
+        captchaToken,
         redirect: false,
       });
 
       if (res?.error) {
-        setError(res.error || 'Invalid email or password.');
+        setError(res.error || 'Invalid email, password, or security CAPTCHA.');
         setLoading(false);
+        fetchCaptcha(); // Refresh CAPTCHA immediately on failure
       } else {
         router.push('/dashboard');
         router.refresh();
@@ -52,6 +88,7 @@ export default function LoginPage() {
     } catch (err) {
       setError('An unexpected error occurred during sign-in.');
       setLoading(false);
+      fetchCaptcha();
     }
   };
 
@@ -156,11 +193,92 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* Security CAPTCHA Verification */}
+          <div className="form-group" style={{ marginTop: '18px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <label className="form-label" style={{ marginBottom: 0 }}>
+                Security Verification (CAPTCHA) <span className="required">*</span>
+              </label>
+              <span style={{ fontSize: '11px', color: '#64748B' }}>
+                Case-insensitive
+              </span>
+            </div>
+
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              gap: '12px', 
+              marginBottom: '10px',
+              padding: '10px 12px',
+              background: '#090d16',
+              border: '1px solid #1e293b',
+              borderRadius: '8px'
+            }}>
+              <div 
+                id="captcha-preview"
+                style={{ flex: 1, display: 'flex', alignItems: 'center', minHeight: '50px' }}
+                dangerouslySetInnerHTML={{ __html: captchaSvg || '<div style="color:#64748B;font-size:12px;padding:12px;">Generating Security Code...</div>' }}
+              />
+
+              <button
+                type="button"
+                onClick={fetchCaptcha}
+                disabled={captchaLoading}
+                title="Generate new CAPTCHA code"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: '#151d30',
+                  border: '1px solid #334155',
+                  color: '#94A3B8',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: captchaLoading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                <RotateCw size={13} style={{ transform: captchaLoading ? 'rotate(180deg)' : 'none', transition: 'transform 0.4s ease' }} />
+                <span>Refresh</span>
+              </button>
+            </div>
+
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                id="captcha-input"
+                value={captchaInput}
+                onChange={(e) => setCaptchaInput(e.target.value.toUpperCase())}
+                required
+                maxLength={8}
+                autoComplete="off"
+                spellCheck="false"
+                className="form-input"
+                placeholder="Enter the 6 characters above"
+                style={{ 
+                  paddingLeft: '38px', 
+                  letterSpacing: '3px', 
+                  fontFamily: "'Courier New', Courier, monospace",
+                  fontWeight: 700,
+                  textTransform: 'uppercase'
+                }}
+              />
+              <KeyRound 
+                size={16} 
+                style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748B' }} 
+              />
+            </div>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
             className="btn btn-primary"
-            style={{ width: '100%', marginTop: '10px', padding: '12px' }}
+            style={{ width: '100%', marginTop: '16px', padding: '12px' }}
           >
             {loading ? (
               <span>Authenticating...</span>
@@ -177,7 +295,7 @@ export default function LoginPage() {
         <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)', textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '11px', color: '#64748B' }}>
             <ShieldCheck size={13} color="#10B981" />
-            <span>Bcrypt Hashed • Role-Protected SQLite Session</span>
+            <span>Cryptographic CAPTCHA • Bcrypt Hashed • Role-Protected Session</span>
           </div>
         </div>
 
