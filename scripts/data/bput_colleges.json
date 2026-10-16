@@ -1,0 +1,1386 @@
+[
+  {
+    "COL_CODE": "104",
+    "TYPE": "Govt (Affiliated)",
+    "NAME OF THE COLLEGE": "Government College of Engineering, Keonjhar",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Keonjhar",
+    "ADDRESS": "At - Jamunalia, Po - Old Town,,Dist - Keonjhar, Odisha - 758002"
+  },
+  {
+    "COL_CODE": "112",
+    "TYPE": "Govt (Affiliated)",
+    "NAME OF THE COLLEGE": "Central Institute of Petrochemicals Engineering and Technology",
+    "COURSES OFFERED": "B.TECH\\M.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Plot No - B-25, CNI Complex, Patia,Dist - Khurda, Odisha - 751024"
+  },
+  {
+    "COL_CODE": "113",
+    "TYPE": "Govt (Affiliated)",
+    "NAME OF THE COLLEGE": "Biju Patnaik Film & Television Institute of Orissa",
+    "COURSES OFFERED": "B.AA&C",
+    "DISTRICT": "Cuttack",
+    "ADDRESS": "Medical Road, Bose Campus, Cuttack,Dist - Cuttack, Odisha - 753007"
+  },
+  {
+    "COL_CODE": "110",
+    "TYPE": "Govt (Affiliated)",
+    "NAME OF THE COLLEGE": "Government College of Engineering, Kalahandi",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Kalahandi",
+    "ADDRESS": "Bhawanipatna, Kalahandi,Dist : Kalahandi, Odisha - 766002"
+  },
+  {
+    "COL_CODE": "109",
+    "TYPE": "Govt (Affiliated)",
+    "NAME OF THE COLLEGE": "Parala Maharaja Engineering College, Berhampur",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "Sitalapalli, Berhampur,Dist : Ganjam, Odisha - 761003"
+  },
+  {
+    "COL_CODE": "151",
+    "TYPE": "Govt (Affiliated)",
+    "NAME OF THE COLLEGE": "Madhusudhan Institute of Co-Operative Management, Bhubaneswar",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Unit - 8, Nayapalli, Bhubaneswar,Dist : Khurda, Odisha - 751012"
+  },
+  {
+    "COL_CODE": "102",
+    "TYPE": "Govt (Constituent)",
+    "NAME OF THE COLLEGE": "Institute of Management & Information Technology, Cuttack",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Cuttack",
+    "ADDRESS": "Gourav Palace, Matha Sahi, Po : Tulsipur, Cuttack,Dist : Cuttack, Odisha - 753008"
+  },
+  {
+    "COL_CODE": "107",
+    "TYPE": "Govt (Constituent)",
+    "NAME OF THE COLLEGE": "College of IT & Management Education, Bhubaneswar",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Zone - B, Plot No - 4, Mancheswar IE Rd., Sector A, Bhubaneswar,Dist : Khurda, Odisha - 751010"
+  },
+  {
+    "COL_CODE": "114",
+    "TYPE": "Govt (Affiliated)",
+    "NAME OF THE COLLEGE": "Centre for UG & PG Studies, BPUT, Odisha",
+    "COURSES OFFERED": "B.TECH\\M.TECH",
+    "DISTRICT": "Sundergarh",
+    "ADDRESS": "Chhend, Rourkela,Dist : Sundergarh, Odisha - 769015"
+  },
+  {
+    "COL_CODE": "105",
+    "TYPE": "Govt (Affiliated Autonomous)",
+    "NAME OF THE COLLEGE": "Indira Gandhi Institute of Technology, Sarang",
+    "COURSES OFFERED": "B.TECH\\M.TECH",
+    "DISTRICT": "Dhenkanal",
+    "ADDRESS": "Sarang, Dhenkanal,Dist : Dhenkanal, Odisha - 759146"
+  },
+  {
+    "COL_CODE": "201",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Seemanta Engineering College, Mayurbhanj",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA",
+    "DISTRICT": "Mayurbhanj",
+    "ADDRESS": "At - Mayurvihar, Village - Jaunti, Po - Jharpokharia,Dist - Mayurbhanj, Baripada, Odisha - 757086"
+  },
+  {
+    "COL_CODE": "202",
+    "TYPE": "Pvt. (Autonomous)",
+    "NAME OF THE COLLEGE": "NIST Institute of Science and Technology",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA\\MBA",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "Palur Hills, Berhampur,Dist - Ganjam, Odisha - 761008"
+  },
+  {
+    "COL_CODE": "204",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Roland Institute of Technology",
+    "COURSES OFFERED": "B.TECH\\MCA\\MBA",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "Surya Vihar, Kothari Singhi, Golanthara, Berhampur,Dist - Ganjam, Odisha - 761008"
+  },
+  {
+    "COL_CODE": "205",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Bhadrak Institute of Engineering & Technology, Barapada, Bhadrak",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MBA",
+    "DISTRICT": "Bhadrak",
+    "ADDRESS": "At/Po - Barapada, Bhadrak,Dist - Bhadrak, Odisha - 756113"
+  },
+  {
+    "COL_CODE": "206",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Ajay Binay Institute of Technology, Cuttack",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA\\MBA",
+    "DISTRICT": "Cuttack",
+    "ADDRESS": "Sector - I, CDA,,Dist - Cuttack, Odisha - 753014"
+  },
+  {
+    "COL_CODE": "209",
+    "TYPE": "Pvt. (Autonomous)",
+    "NAME OF THE COLLEGE": "Silicon Institute of Technology",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA\\MS\\MSC",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Silicon Hills, Patia, Bhubaneswar,Dist - Khurda, Odisha - 751024"
+  },
+  {
+    "COL_CODE": "214",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Konark Institute of Science and Technology",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MBA(I)\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Po Box No. 21, Technopark, Jatni,Dist - Khurda, Odisha - 752050"
+  },
+  {
+    "COL_CODE": "215",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Eastern Academy of Science and Technology (EAST)",
+    "COURSES OFFERED": "B.TECH\\M.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Prachi Vihar, Anantapur, Po - Phulnakhara,Dist - Khurda, Odisha - 754001"
+  },
+  {
+    "COL_CODE": "217",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Padmashree Krutartha Acharya College of Engineering, Bargarh",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Bargarh",
+    "ADDRESS": "At/Po - Chakarkend,Dist - Bargarh, Odisha - 768033"
+  },
+  {
+    "COL_CODE": "219",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "College of Engineering Bhubaneswar",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Plot No - 1(a), Cni Complex, Patia, Chandrasekharpur,Dist - Khurda, Odisha - 751024"
+  },
+  {
+    "COL_CODE": "220",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Sanjay Memorial Institute of Technology, SMIT",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "Chandipadar, Via - Bhatakumarada, Berhampur,Dist - Ganjam, Odisha - 761003"
+  },
+  {
+    "COL_CODE": "221",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Ghanashyam Hemalata Intitute of Technology & Management, Puri",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Puri",
+    "ADDRESS": "Rasananda Jena Vihar, Bhuan, Po - Chhaitana, Puri,Dist - Puri, Odisha - 752002"
+  },
+  {
+    "COL_CODE": "223",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Krupajal Engineering College",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Pubasasan, Kausalyaganga,Dist - Khurda, Odisha - 751002"
+  },
+  {
+    "COL_CODE": "224",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Majhighariani Institute of Technology and Science",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Rayagada",
+    "ADDRESS": "Sriram Vihar, Bhujabala, Kolnara, Rayagada,Dist - Rayagada, Odisha - 765017"
+  },
+  {
+    "COL_CODE": "225",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Balasore College of Engineering and Technology",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA\\MBA",
+    "DISTRICT": "Balasore",
+    "ADDRESS": "Sergarh, Balasore,Dist - Balasore, Odisha - 756060"
+  },
+  {
+    "COL_CODE": "228",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gopal Krishna College of Engineering & Technology, Jeypore",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Koraput",
+    "ADDRESS": "Gourahari Vihar, Po - Raniput, Jeypore,Dist - Koraput, Odisha - 764005"
+  },
+  {
+    "COL_CODE": "229",
+    "TYPE": "Pvt. (Autonomous)",
+    "NAME OF THE COLLEGE": "DRIEMS",
+    "COURSES OFFERED": "B.TECH\\M.TECH",
+    "DISTRICT": "Cuttack",
+    "ADDRESS": "At - Kairapari, Po - Kotsahi (Tangi),Dist - Cuttack, Odisha - 754022"
+  },
+  {
+    "COL_CODE": "230",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Synergy Institute of Engineering & Technology",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Dhenkanal",
+    "ADDRESS": "Banamaliprasad, By the Side of NH-42,Dist - Dhenkanal, Odisha - 759001"
+  },
+  {
+    "COL_CODE": "231",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Samanta Chandrasekhar Institute of Technology & Management",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Koraput",
+    "ADDRESS": "At - Janiguda, Po - Semiliguda,Dist - Koraput, Odisha - 764036"
+  },
+  {
+    "COL_CODE": "236",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gayatri Institute of Computer and Management Studies (GICMS)",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Rayagada",
+    "ADDRESS": "Gyan Vihar, At - Regeda, Po - Gunupur,Dist - Rayagada, Odisha - 765022"
+  },
+  {
+    "COL_CODE": "237",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Institute of Science and Information Technology ISIT",
+    "COURSES OFFERED": "MCA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Prasnagarbha, Plot No. S-3/68, 69 & 83, Sector - A, Zone - B,Mancheswar Industrial Estate, Bhubaneswar, Odisha - 751010"
+  },
+  {
+    "COL_CODE": "240",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Rourkela Institute of Technology",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Sundergarh",
+    "ADDRESS": "At - RIT Campus, Po - Kalunga, Rourkela,Dist - Sundergarh, Odisha - 770031"
+  },
+  {
+    "COL_CODE": "242",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Academy of Business Administration",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Balasore",
+    "ADDRESS": "Harida, Kuruda,Dist - Balasore, Odisha - 756056"
+  },
+  {
+    "COL_CODE": "247",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Regional College of Management",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Chakadola Vihar, Chandrasekharpur, Bhubaneswar,Dist - Khurda, Odisha - 751023"
+  },
+  {
+    "COL_CODE": "251",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Kanak Manjari Institute of Pharmaceutical Sciences",
+    "COURSES OFFERED": "B.PHARM\\M.PHARM",
+    "DISTRICT": "Sundargarh",
+    "ADDRESS": "At-Chhend Colony, Po-Rourkela,,Dist-Sundargarh Odisha Pin-769015"
+  },
+  {
+    "COL_CODE": "252",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "The Pharmaceutical College",
+    "COURSES OFFERED": "B.PHARM\\M.PHARM",
+    "DISTRICT": "Bargarh",
+    "ADDRESS": "Samaleswari Vihar, Tingipali Po-Mohada, Via-Barpali,Dist-Bargarh Odisha Pin-768029"
+  },
+  {
+    "COL_CODE": "253",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "College of Pharmaceutical Sciences, Berhampur",
+    "COURSES OFFERED": "B.PHARM\\M.PHARM",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "At/Po -Mohuda Dist-Ganjam,,Odisha, Pin-760002"
+  },
+  {
+    "COL_CODE": "254",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Royal College of Pharmacy and Health Sciences",
+    "COURSES OFFERED": "B.PHARM\\M.PHARM",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "Andhapasara Road,"
+  },
+  {
+    "COL_CODE": "256",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gayatri College of Pharmacy",
+    "COURSES OFFERED": "B.PHARM\\M.PHARM",
+    "DISTRICT": "Sambalpur",
+    "ADDRESS": "Gayatri Vihar, Jamadarpali Sambalpur-768200,"
+  },
+  {
+    "COL_CODE": "258",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Biju Patnaik Institute of Information Technology and Management Studies",
+    "COURSES OFFERED": "MBA(I)\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Plot No - F/4, Chandaka Industrial Estate, Opp of Infocity, Patia,Dist - Khurda, Bhubaneswar, Odisha - 751024"
+  },
+  {
+    "COL_CODE": "259",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Mahavir Institute of Engineering and Technology",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Mahavir Nagar, Paniora, Po - Palashpur,Dist - Khurda, Odisha - 752054"
+  },
+  {
+    "COL_CODE": "260",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Rourkela Institute of Management Studies",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Institutional Area, Gopabandhu Nagar, Chhend,Dist - Sundergarh, Rourkela - 769015"
+  },
+  {
+    "COL_CODE": "262",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "IIPM School of Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Sundergarh",
+    "ADDRESS": "At/po - Kansbahal,Dist - Sundergarh, Odisha - 770034"
+  },
+  {
+    "COL_CODE": "263",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Dr. Ambedkar Memorial Institute of Information Technology & Management Science",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Sundergarh",
+    "ADDRESS": "Jagda, Rourkela,Dist - Sundergarh, Odisha - 769042"
+  },
+  {
+    "COL_CODE": "266",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Trident Academy of Creative Technology",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "F2/B, Chandaka Industrial Estate, In Front Of Infocity,Chandrasekharpur, Dist - Khurda, Bhubaneswar, Odisha - 751024"
+  },
+  {
+    "COL_CODE": "267",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Roland Institute of Pharmaceutical Sciences",
+    "COURSES OFFERED": "B.PHARM\\M.PHARM",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "Po- Khodasingi,"
+  },
+  {
+    "COL_CODE": "268",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Jeypore College of Pharmacy",
+    "COURSES OFFERED": "B.PHARM\\M.PHARM",
+    "DISTRICT": "Koraput",
+    "ADDRESS": "Rondapalli, Jeypore, Dist- Koraput, Odisha, 764002,"
+  },
+  {
+    "COL_CODE": "269",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gayatri Institute of Science and Technology",
+    "COURSES OFFERED": "B.PHARM\\M.PHARM",
+    "DISTRICT": "Rayagada",
+    "ADDRESS": "Gyan Vihar, At-Regeda Po-Gunupur-,Dist-Rayagada-(Odisha) Pin -765022"
+  },
+  {
+    "COL_CODE": "271",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "PJ College of Management & Technology",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Swatik Nagar, Kesora, Bhubaneswar,Dist - Khurda, Odisha - 751002"
+  },
+  {
+    "COL_CODE": "273",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "IMT Pharmacy College, Puri",
+    "COURSES OFFERED": "B.PHARM\\M.PHARM",
+    "DISTRICT": "Puri",
+    "ADDRESS": "At-Sai Bihar , New Nabakalebara Road, Village-Gopalpur,,Puri Post -Puri-2 Dist -Puri Odisha State Pin -752002"
+  },
+  {
+    "COL_CODE": "274",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "United School of Business Management",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Plot No - 37/A, Chandaka Industrial Estate, Patia, Bhubaneswar,Dist - Khurda, Odisha - 751024"
+  },
+  {
+    "COL_CODE": "275",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Bhubaneswar Institute of Management & Information Technology",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Prasnagarbha, Plot No - S-3/68, 69 & 83, Sector - A, Zone - B,Mancheswar Industrial Estate, Dist - Khurda, Odisha - 751010"
+  },
+  {
+    "COL_CODE": "276",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "BRM Institute of Management and Information Technology",
+    "COURSES OFFERED": "MBA(I)\\MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Puba Sasan, Koushlya Ganga, Bhubaneswar,Dist - Khurda, Odisha - 751002"
+  },
+  {
+    "COL_CODE": "278",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Global Institute of Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Hanspal, Po - Naharkanta, Bhubaneswar,Dist - Khurda, Odisha - 752101"
+  },
+  {
+    "COL_CODE": "280",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "NIIS Institute of Business Administration",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Sarada Vihar, Madanpur, Bhubaneswar,Dist - Khurda, Odisha - 752054"
+  },
+  {
+    "COL_CODE": "281",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Institute of Professional Studies & Research",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Cuttack",
+    "ADDRESS": "IPSAR House, Sector - 6, CDA, Cuttack,Dist - Cuttack, Odisha - 753014"
+  },
+  {
+    "COL_CODE": "282",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "S.M.Institute of Technology, P.G.Centre for Management Studies",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "Brundaban Bihar, Ankushpur, Berhampur,Dist - Ganjam, Odisha - 761100"
+  },
+  {
+    "COL_CODE": "283",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Rajdhani College of Engineering and Management",
+    "COURSES OFFERED": "MBA(I)\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Plot No - 18, Sector - A, Zone - B, Mancheswar Industrial Estate,Dist - Khurda, Odisha - 751010"
+  },
+  {
+    "COL_CODE": "284",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Astha School of Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "261, Atala, Balianta, Bhubaneswar,Dist - Khurda, Odisha - 752101"
+  },
+  {
+    "COL_CODE": "285",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "RJ School of Management Studies",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Balasore",
+    "ADDRESS": "RJ Vidya Vihar, Tigiria, Tentulipura, Po - Punjibag, Via - Sunhat,Dist - Balasore, Odisha - 756002"
+  },
+  {
+    "COL_CODE": "286",
+    "TYPE": "Pvt. (Autonomous)",
+    "NAME OF THE COLLEGE": "Srusti Academy of Management",
+    "COURSES OFFERED": "MBA(I)\\MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Plot No - 38/1, Chandaka Industrial Estate, Po - Patia,Dist - Khurda, Odisha - 751024"
+  },
+  {
+    "COL_CODE": "287",
+    "TYPE": "Pvt. (Autonomous)",
+    "NAME OF THE COLLEGE": "GITA Autonomous College, Bhubaneswar",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Badaraghunathpur, Po - Madanpur, Via - Janla, Bhubaneswar,Dist - Khurda, Odisha - 752054"
+  },
+  {
+    "COL_CODE": "288",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "NM Institute of Engineering & Technology",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Sijua, Patrapada, Bhubaneswar,Dist - Khurda, Odisha - 751019"
+  },
+  {
+    "COL_CODE": "289",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Trident Academy of Technology",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "F2A, Infront Of Inforcity, Chandaka I.E, Chandrasekharpur,Dist - Khurda, Bhubaneswar, Odisha - 751024"
+  },
+  {
+    "COL_CODE": "290",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Dadhichi College of Pharmacy",
+    "COURSES OFFERED": "B.PHARM\\M.PHARM",
+    "DISTRICT": "Cuttack",
+    "ADDRESS": "Vidya Vihar, Sundargram,,Cuttack, Odisha"
+  },
+  {
+    "COL_CODE": "291",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "The Techno School",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "361-A, Patrapada, Bhubaneswar,Dist - Khurda, Odisha - 751019"
+  },
+  {
+    "COL_CODE": "292",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gandhi Engineering College (GEC, Bhubaneswar)",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Badaraghunathpur, Po - Madanpur, off NH5 on Gahira Square,Dist - Khurda, Bhubaneswar, Odisha - 752054"
+  },
+  {
+    "COL_CODE": "293",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Satyasai Engineering College",
+    "COURSES OFFERED": "B.TECH\\M.TECH",
+    "DISTRICT": "Balasore",
+    "ADDRESS": "At - Srikona (chandipur Sea Beach Road), Po - Panjibag, Via - Sunhat,Dist - Balasore, Odisha - 756002"
+  },
+  {
+    "COL_CODE": "294",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Raajdhani Engineering College",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Near Mancheswar Rly. Station, Mancheswar, Bhubaneswar,Dist - Khurda, Odisha - 751017"
+  },
+  {
+    "COL_CODE": "295",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Piloo-mody College of Architecture",
+    "COURSES OFFERED": "B.ARCH\\M.ARCH",
+    "DISTRICT": "Cuttack",
+    "ADDRESS": "Ajay Binay Institute Of Technology, Badambadi, Cuttack,Dist - Cuttack, Odisha - 753012"
+  },
+  {
+    "COL_CODE": "296",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "College of Pharmaceutical Sciences, Puri",
+    "COURSES OFFERED": "B.PHARM\\M.PHARM",
+    "DISTRICT": "Puri",
+    "ADDRESS": "Marine Drive Road Po-Baliguali,Dist-Puri Pin-752002 Odisha"
+  },
+  {
+    "COL_CODE": "297",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Nalanda Institute of Technology",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA\\MBA\\MS\\MSC\\MSC(I)",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Bhudhist Villa, Nebad Bhuasani Temple Square, Chandaka, Bhubaneswar,Dist - Khurda, Odisha - 752056"
+  },
+  {
+    "COL_CODE": "298",
+    "TYPE": "Pvt. (Autonomous)",
+    "NAME OF THE COLLEGE": "Gandhi Institute For Technology (GIFT), Bhubaneswar",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA\\MBA\\MS\\MSC\\MSC(I)",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Gramadiha, Po - Gangapada, Via - Janla,Dist - Khurda, Odisha - 752054"
+  },
+  {
+    "COL_CODE": "299",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Templecity Institute of Technology & Engineering (TITE), Bhubaneswar",
+    "COURSES OFFERED": "B.TECH\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Vill - Taraboi Mouza - Manipur, Ps/Tahsil - Jatni,Dist - Khurda, Odisha - 752050"
+  },
+  {
+    "COL_CODE": "300",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Hi-Tech Institute of Technology",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MBA(I)\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Industrial Estate, Khurda, Bhubaneswar,Dist - Khurda, Odisha - 752057"
+  },
+  {
+    "COL_CODE": "301",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Vignan Institute of Technology and Management",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MBA",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "Bhairavi Vihar, Haradanga Village, Po - Mantridi, Via - Golanthara,Dist - Ganjam, Berhampur, Odisha - 761008"
+  },
+  {
+    "COL_CODE": "302",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Modern Engineering & Management Studies",
+    "COURSES OFFERED": "B.TECH\\MBA",
+    "DISTRICT": "Balasore",
+    "ADDRESS": "Banaparia, Kuruda, Balasore,Dist - Balasore, Odisha - 756056"
+  },
+  {
+    "COL_CODE": "304",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gandhi Institute of Technology and Management (GITAM)",
+    "COURSES OFFERED": "B.TECH\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Saraswati Vihar, At - Gramadiha, Po - Gangapada, Via - Janala,Dist - Khurda, Odisha - 752054"
+  },
+  {
+    "COL_CODE": "305",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Kalam Institute of Technology",
+    "COURSES OFFERED": "B.TECH\\MBA",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "Govinda Vihar, Govindapur, Po - Laxmipur, Bermhampur,Dist - Ganjam, Odisha - 761003"
+  },
+  {
+    "COL_CODE": "309",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Black Diamond College of Engineering & Technology, Jharsuguda",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Jharsuguda",
+    "ADDRESS": "At - Balijori, L&t Bypass Road. Post Box No. 21,Dist - Jharsuguda, Odisha - 768201"
+  },
+  {
+    "COL_CODE": "310",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Modern Institute of Technology and Management",
+    "COURSES OFFERED": "B.TECH\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Bhagabatipur, Po - Kantabada, Via - Janla,Dist - Khurda, Odisha - 752054"
+  },
+  {
+    "COL_CODE": "311",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Subas Institute of Technology",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Gyan Vihar, Barang, Bhubaneswar,Dist - Khurda, Odisha - 754005"
+  },
+  {
+    "COL_CODE": "312",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Barrister Ranjit Mohanty International Institute of Technology",
+    "COURSES OFFERED": "B.TECH\\M.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Pandra, Po - Rasulgarh, Bhubaneswar,Dist - Khurda, Odisha - 751010"
+  },
+  {
+    "COL_CODE": "315",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gurukula Institute of Technology",
+    "COURSES OFFERED": "B.TECH\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Jamujhari, Chhatabar, Bhubaneswar,Dist - Khurda, Odisha - 752054"
+  },
+  {
+    "COL_CODE": "316",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Bhubaneswar Engineering College (BEC)",
+    "COURSES OFFERED": "B.TECH\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "NK Nagar, At - Gramdiha, Pittapally, Bhubaneswar,Dist - Khurda, Odisha - 752024"
+  },
+  {
+    "COL_CODE": "317",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gandhi Institute of Science and Technology",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Rayagada",
+    "ADDRESS": "At - Kholiguda, Po - Kothapeta, Rayagada,Dist - Rayagada, Odisha - 765017"
+  },
+  {
+    "COL_CODE": "318",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Indus College of Engineering",
+    "COURSES OFFERED": "B.TECH\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Barakuda Height, Bhubaneswar,Dist - Khurda, Odisha - 752050"
+  },
+  {
+    "COL_CODE": "319",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Sundargarh Engineering College, Sundargarh",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Sundergarh",
+    "ADDRESS": "At/Po - Kirei, Sundargarh,Dist - Sundargarh, Odisha - 770073"
+  },
+  {
+    "COL_CODE": "320",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Aryan Institute of Engineering & Technology",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Barakuda, Po - Panchagaon, Bhubaneswar,Dist - Khurda, Odisha - 752050"
+  },
+  {
+    "COL_CODE": "321",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Bhubaneswar Institute of Technology",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Infovalley, Harapur, Bhubaneswar,Dist - Khurda, Odisha - 752054"
+  },
+  {
+    "COL_CODE": "322",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Einstein Academy of Technology and Management",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Baniatangi, Po - Bajapur,,Dist - Khurda, Odisha - 752060"
+  },
+  {
+    "COL_CODE": "324",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gandhi Academy of Technology and Engineering",
+    "COURSES OFFERED": "B.TECH\\MCA\\MBA",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "Golanthara, Konisi, Berhampur,Dist - Ganjam, Odisha - 761008"
+  },
+  {
+    "COL_CODE": "326",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gandhi Institute For Education & Technology",
+    "COURSES OFFERED": "B.TECH\\M.TECH\\MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Baniatangi, Po - Bajpur,Dist - Khurda, Odisha - 752060"
+  },
+  {
+    "COL_CODE": "328",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Indotech College of Engineering",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Plot No 144, At/Po - Mallipada, Via - Pallahat,Dist - Khurda, Odisha - 752056"
+  },
+  {
+    "COL_CODE": "329",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "KMBB College of Engineering and Technology",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "NH-5, Daleiput, Khurda,Dist - Khurda, Odisha - 752056"
+  },
+  {
+    "COL_CODE": "330",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gayatri Institute of Engineering and Technology",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "Tatadapalli Village, Golanthra Junction, Konisi Tahsil, Berhampur,Dist - Ganjam, Odisha - 761008"
+  },
+  {
+    "COL_CODE": "331",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Srinix College of Engineering, Balasore",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Balasore",
+    "ADDRESS": "At - Ranipatna, Po - Balasore,Dist - Balasore, Odisha - 756001"
+  },
+  {
+    "COL_CODE": "332",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Sophitorium Engineering College",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "In Front Road of Collector's Office, Baniatangi,Dist - Khurda, Odisha - 752060"
+  },
+  {
+    "COL_CODE": "333",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Suddhananda Engineering and Research Centre",
+    "COURSES OFFERED": "B.TECH\\M.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Nachhipur, Po - Bhatapatna, Bhubaneswar,Dist - Khurda, Odisha - 752115"
+  },
+  {
+    "COL_CODE": "334",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Shibani Institute of Technical Education (SITE)",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At/Po - Chhatabar, Via - Janla, Bhubaneswar,Dist - Khurda, Odisha - 752054"
+  },
+  {
+    "COL_CODE": "335",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Synergy Institute of Technology",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Bhimapur, Via - Phulnakhara, Po - Pahala, Bhubaneswar,Dist - Khurda, Odisha - 752101"
+  },
+  {
+    "COL_CODE": "336",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Spintronic Technology and Advance Research",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At/Po - Taraboi, Via - Jatani, Bhubaneswar,Dist - Khurda, Odisha - 752050"
+  },
+  {
+    "COL_CODE": "337",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Vikash Institute of Technology, Bargarh",
+    "COURSES OFFERED": "B.TECH\\MS\\MSC\\MSC(I)",
+    "DISTRICT": "Bargarh",
+    "ADDRESS": "Vikash Enclave, Barahaguda, Canal Chowk,Dist - Bargarh, Odisha - 768028"
+  },
+  {
+    "COL_CODE": "339",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Vedang Institute of Technology",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Durgaprasad, Po - Ramachandi, Bhubaneswar,Dist - Khurda, Odisha - 752010"
+  },
+  {
+    "COL_CODE": "341",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Silicon Institute of Technology",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Sambalpur",
+    "ADDRESS": "Silicon West, Sason, Sambalpur,Dist - Sambalpur, Odisha - 768200"
+  },
+  {
+    "COL_CODE": "342",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Oxford College of Engineering and Management",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Ramachandrapur, Po - Bhatapatna, Ps - Balianta, Bhubaneswar,Dist - Khurda, Odisha"
+  },
+  {
+    "COL_CODE": "343",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Vijayanjali Institute of Technology",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Balasore",
+    "ADDRESS": "At - Khantapada, Balasore,Dist - Balasore, Odisha - 756043"
+  },
+  {
+    "COL_CODE": "344",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "VITS Engineering College",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Damanabhuin, Khurda,Dist - Khurda, Odisha - 752020"
+  },
+  {
+    "COL_CODE": "346",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Adarsha College of Engineering",
+    "COURSES OFFERED": "B.TECH\\M.TECH",
+    "DISTRICT": "Angul",
+    "ADDRESS": "At - Saradhapur, Po - Kumurisingha, Via - Angul,Dist - Angul, Odisha - 759122"
+  },
+  {
+    "COL_CODE": "347",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Nigam Institute of Engineering & Technology",
+    "COURSES OFFERED": "B.TECH\\M.TECH",
+    "DISTRICT": "Cuttack",
+    "ADDRESS": "At - Baranga, Cuttack,Dist - Cuttack, Odisha - 754006"
+  },
+  {
+    "COL_CODE": "348",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gandhi Institute of Excellent Technocrats",
+    "COURSES OFFERED": "B.TECH\\MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Princes Avenue, Gangapatna, Bhubaneswar, Po - Kantabada, Via - Janla,Dist - Khurda, Odisha - 752054"
+  },
+  {
+    "COL_CODE": "356",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Suddhananda School of Management and Computer Science",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Nachhipur, Po - Bhatapatna, Bhubaneswar,Dist - Khurda, Odisha - 752115"
+  },
+  {
+    "COL_CODE": "360",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Capital Engineering College",
+    "COURSES OFFERED": "B.TECH\\MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Plot No - 1293, At/Po - Mahatapala,Dist - Khurda, Odisha - 752055"
+  },
+  {
+    "COL_CODE": "361",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Capital Institute of Management and Science",
+    "COURSES OFFERED": "MBA(I)\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "1309, Padhansahi Square, Bhubaneswar,Dist - Khurda, Odisha - 752050"
+  },
+  {
+    "COL_CODE": "362",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Rayagada Institute of Technology and Management",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Rayagada",
+    "ADDRESS": "Pitamahal, Rayagada,Dist - Rayagada, Odisha - 765001"
+  },
+  {
+    "COL_CODE": "364",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Krutika Institute of Technical Education",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Gangapatna, Bhubaneswar,Dist - Khurda, Odisha - 752054"
+  },
+  {
+    "COL_CODE": "365",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Bhubaneswar Institute of Industrial Technology",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Pandiapada, Retanga, Bhubaneswar,Dist - Khurda, Odisha - 752054"
+  },
+  {
+    "COL_CODE": "367",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Radhakrishna Institute of Technology and Engineering (RITE)",
+    "COURSES OFFERED": "B.TECH\\MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Plot No.-1,khurda Industrial Estate, Bhubaneswar,Dist - Khurda, Odisha - 752060"
+  },
+  {
+    "COL_CODE": "368",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Saraswat Institute of Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Keranda, Bajpur, Bhubaneswar,Dist - Khurda, Odisha - 752060"
+  },
+  {
+    "COL_CODE": "369",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Academy of Management & Information Technology",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "67, IID Center,Dist - Khurda, Odisha - 752057"
+  },
+  {
+    "COL_CODE": "370",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Bhubaneswar College of Engineering",
+    "COURSES OFFERED": "B.TECH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Khajuria, Po - Damanabhuin, Ps - Jankia,Dist - Khurda, Odisha - 752020"
+  },
+  {
+    "COL_CODE": "372",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Krupajal Computer Academy",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Prashanti Vihar, Puba Sasan, Kausalyaganga, Bhubaneswar,Dist - Khurda, Odisha - 751002"
+  },
+  {
+    "COL_CODE": "373",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Krupajal Management Studies",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Prashanti Vihar, Puba Sasan, Kausalyaganga, Bhubaneswar,Dist - Khurda, Odisha - 751002"
+  },
+  {
+    "COL_CODE": "374",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gandhi Institute of Advanced Computer and Research",
+    "COURSES OFFERED": "B.TECH\\MBA",
+    "DISTRICT": "Rayagada",
+    "ADDRESS": "Prajukti Vihar, Aurobindo Marg, Rayagada,Dist - Rayagada, Odisha - 765002"
+  },
+  {
+    "COL_CODE": "375",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "SGI School of Architecture",
+    "COURSES OFFERED": "B.ARCH",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At-nachhipur, Po-bhatapatana, Bhubaneswar,Dist - Khurda, Odisha - 752115"
+  },
+  {
+    "COL_CODE": "376",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Institute of Business Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Prachi Vihar, Anantapur, Phulnakhara,Dist - Khurda, Odisha - 754001"
+  },
+  {
+    "COL_CODE": "377",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Koustuv Business School",
+    "COURSES OFFERED": "MBA(I)\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Plot No - 1(c), Sector - B, CNI Complex, Patia, Bhubaneswar,Dist - Khurda, Odisha - 751024"
+  },
+  {
+    "COL_CODE": "379",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Dhaneswar Rath Institute of Engineering and Management Studies (DRIEMS) MBA",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Cuttack",
+    "ADDRESS": "At - Kairapari, Po - Kotsahi (Tangi), Cuttack,Dist - Cuttack, Odisha - 754022"
+  },
+  {
+    "COL_CODE": "380",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Oxford College of Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Ramachandrapur, Po - Bhatapatna, Ps - Balianta, Bhubaneswar,Dist - Khurda, Odisha - 752115"
+  },
+  {
+    "COL_CODE": "382",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Zenith School of Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Pitapalli, Po - Jatani,Dist - Khurda, Odisha - 752050"
+  },
+  {
+    "COL_CODE": "383",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gurukrupa College of Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Plot No - 1742, Sub Plot - 03, At - Kalarahanga, Po - KIIT Square,Patia, Dist - Khurda, Odisha - 751024"
+  },
+  {
+    "COL_CODE": "384",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Aryan School of Business Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Barakuda, Po - Panchagaon, Bhubaneswar,Dist - Khurda, Odisha - 752050"
+  },
+  {
+    "COL_CODE": "386",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Ganesh Institute of Management Studies",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Bidya Nagar, Jagannath Prasad, Andharua, Bhubaneswar,Dist - Khurda, Odisha - 751003"
+  },
+  {
+    "COL_CODE": "387",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Asian School of Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Bantala, Po - Muktapur,Dist - Khurda, Odisha - 752055"
+  },
+  {
+    "COL_CODE": "388",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Capital Business School",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Plot No - 1293, Mahatapalla, Po - Bajapur,Dist - Khurda, Odisha - 752060"
+  },
+  {
+    "COL_CODE": "389",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Disha College of Management and Technology",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "Biswanathpur Road, Near Bhairabi Temple, Po - Mantridi,Via - Golanthara, Berhampur, Dist - Ganjam, Odisha - 761008"
+  },
+  {
+    "COL_CODE": "390",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Adarsha School of Engineering & International Polytechnic",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Angul",
+    "ADDRESS": "At - Saradhapur, Po - Kumurisingha, Angul,Via / Dist - Angul, Odisha - 759122"
+  },
+  {
+    "COL_CODE": "391",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Maharaja Business School",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Angul",
+    "ADDRESS": "Gamai, Po - Gangapada, Via - Janla, Bhubaneswar,Dist - Khurda, Odisha - 752054"
+  },
+  {
+    "COL_CODE": "392",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Swami Vivekananda Institute of Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Baniatangi, Po - Bazapur, Bhubaneswar,Dist - Khurda, Odisha - 752055"
+  },
+  {
+    "COL_CODE": "394",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Institute of Pharmaceutical Sciences",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Balasore",
+    "ADDRESS": "Station Bazar , On Jamalpur Road, Near Nh-60,,Jaleswar, Balasore, Odisha, 756032"
+  },
+  {
+    "COL_CODE": "395",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gayatri Institute of Science and Technology",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "Ganju, Berhampur,Dist - Ganjam, Odisha - 760002"
+  },
+  {
+    "COL_CODE": "396",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Utkal Institute of Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Rathipur, Po  Kantia, Jatani,Dist - Khurda, Odisha - 752050"
+  },
+  {
+    "COL_CODE": "397",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Bhubaneswar Institute of Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Narasingpur, Retang, Bhubaneswar,Dist - Khurda, Odisha - 751054"
+  },
+  {
+    "COL_CODE": "398",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Presidency College",
+    "COURSES OFFERED": "MCA",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "Village - Kanisi, Sihala Road, Po - Sunadei, Konisi, Berhampur,Dist - Ganjam, Odisha - 761008"
+  },
+  {
+    "COL_CODE": "399",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Sri Institute of Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Nayagarh",
+    "ADDRESS": "Plot No - 3287/3603, At/po - Komand, Nayagarh,Dist - Nayagarh, Odisha - 752090"
+  },
+  {
+    "COL_CODE": "400",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "HM School of Business Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Phulachhanchuni, Po - Gudum, Bhubaneswar,Dist - Khurda, Odisha - 752056"
+  },
+  {
+    "COL_CODE": "401",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Samet School of Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "75/2 Sai Vihar, Bharatpur, Bhubaneswar,Dist - Khurda, Odisha - 751003"
+  },
+  {
+    "COL_CODE": "402",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Cambridge School of Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Balasore",
+    "ADDRESS": "At/Po - Kantipur, Soro,Dist - Balasore, Odisha - 756045"
+  },
+  {
+    "COL_CODE": "403",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "The College of Pharmaceutical Science",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At/Po-Tamando, Via-Janla, Dist-Khurda,,Bhubaneswar-752054"
+  },
+  {
+    "COL_CODE": "404",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Kalinga Institute of Pharmaceutical Sciences",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Balasore",
+    "ADDRESS": "At-Biruan, Behind Hari Marine, Po-Sergarh,,Dist-Balasore-756040, Balasore"
+  },
+  {
+    "COL_CODE": "405",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Santoshi Institute of Pharmaceutical Education and Research",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Cuttack",
+    "ADDRESS": "Manguli, Cuttack,"
+  },
+  {
+    "COL_CODE": "407",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Dr. Ambedkar Institute of Pharmaceutical Science",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Sundargarh",
+    "ADDRESS": "At/Po-Jabaghat, Via -Jhirpani,,Rourkela, Sundargarh"
+  },
+  {
+    "COL_CODE": "408",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Aurosri Institute of Pharmaceutical Education and Research",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Cuttack",
+    "ADDRESS": "At-Kadei, Po-Uchhapada,  Ps-Tangi,,Dist-Cuttack , Pin-754022"
+  },
+  {
+    "COL_CODE": "409",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Mayurbhanj Medical Academy",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Mayurbhanj",
+    "ADDRESS": "Indapahi, Laxmiposi, Baripada,,Mayurbhanj, Odisha, 757107"
+  },
+  {
+    "COL_CODE": "410",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Batakrushna College of Pharmacy",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Nuapada",
+    "ADDRESS": "At-Ainlajuba, Po-Darlimunda,,Dist-Nuapada, Pin-766105, Odisha"
+  },
+  {
+    "COL_CODE": "416",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Utkal Institute of Technology and Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Bhatakuri, Po - Gangapada,Dist - Khurda, Odisha - 752054"
+  },
+  {
+    "COL_CODE": "417",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Vamsi Institute of Management Studies",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Rayagada",
+    "ADDRESS": "At - Jagannathpur, Po - Pitamahal,Dist - Rayagada, Odisha - 765002"
+  },
+  {
+    "COL_CODE": "415",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Einstein College of Computer Application and Management",
+    "COURSES OFFERED": "MCA\\MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Baniatangi, Po - Bajapur Village,Dist - Khurda, Odisha - 752060"
+  },
+  {
+    "COL_CODE": "418",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Gayatri Institute of Management",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At - Sudhasadangi, Mouza/Po - Brahmansualo, Block/Ps - Balianta,Dist - Khurda, Bhubaneswar, Odisha - 752100"
+  },
+  {
+    "COL_CODE": "414",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Bharat Institute of Management and Technology",
+    "COURSES OFFERED": "MBA",
+    "DISTRICT": "Balasore",
+    "ADDRESS": "Dahapada, Fuladi,Dist - Balasore"
+  },
+  {
+    "COL_CODE": "NP07",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Xavier Pharmacy College, Jajpur",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Jajpur",
+    "ADDRESS": "Jajpur Road, Jajpur Road, F C Project Jajpur Road,,Dist-Jajpur, Odisha - 755020"
+  },
+  {
+    "COL_CODE": "NP10",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Koustuve Research Institute Of Medical Sciences (KRIMS), Bhubaneswar",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Plot No. 2, CNI Complex, Inforcity Road,,Patia, Bhubaneswar - 751024"
+  },
+  {
+    "COL_CODE": "NP11",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Om Sai College Of Pharmacy & Health Sciences, Berhampur",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Ganjam",
+    "ADDRESS": "Sai Vihar, Near Haldipadar Junction, NH16, By Pass,,Berhampur, Ganjam, Odisha - 760003"
+  },
+  {
+    "COL_CODE": "NP12",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Maa Vaishnodevi College Pharmacy, Balasore",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Balasore",
+    "ADDRESS": "At/Po û Angargadia, Harida, Dist : Balasore - 756001,"
+  },
+  {
+    "COL_CODE": "226",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Seemanta Institute of Pharmaceutical Sciences",
+    "COURSES OFFERED": "B.PHARM\\M.PHARM",
+    "DISTRICT": "Mayurbhanj",
+    "ADDRESS": "At/Po-Jharpokharia Dist-Mayurbhanj,Odisha Pin-757086"
+  },
+  {
+    "COL_CODE": "239",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Sri Jayadev College of Pharmaceutical Sciences",
+    "COURSES OFFERED": "B.PHARM\\M.PHARM",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "Po-Naharkanta Via-Balianta Bhubaneswar,District Khurda Pin 752101, Odisha"
+  },
+  {
+    "COL_CODE": "255",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Indira Gandhi Institute of Pharmaceutical Sciences",
+    "COURSES OFFERED": "B.PHARM\\M.PHARM",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "IRC Village, Bhubaneswar-751015, Odisha.,"
+  },
+  {
+    "COL_CODE": "257",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Institute of Pharmacy & Technology, Salipur",
+    "COURSES OFFERED": "B.PHARM\\M.PHARM",
+    "DISTRICT": "Cuttack",
+    "ADDRESS": "Salipur At/Po-Salipur Dist. Cuttack, Odisha Pin-754202,"
+  },
+  {
+    "COL_CODE": "345",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Hi-Tech College of Pharmacy",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At-Pandara, Po-Rasulgarh, Bhubaneswar,,Dist-Khurda, Pin -751025, Odisha"
+  },
+  {
+    "COL_CODE": "393",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Nityananda College of Pharmacy",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Balasore",
+    "ADDRESS": "NH -16, At/Po-Sergarh,"
+  },
+  {
+    "COL_CODE": "406",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Om Sai Institute of Paramedical Sciences",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Mayurbhanj",
+    "ADDRESS": "At/Po-Ambadali, Via-Dukura, Ps-Khunta,,Mayurbhanj, Odisha 757075"
+  },
+  {
+    "COL_CODE": "411",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Orissa College of Pharmaceutical Sciences",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Dhenkanal",
+    "ADDRESS": "At-Patimala, Po-Mahulipada, Dist-Dhenkanal,"
+  },
+  {
+    "COL_CODE": "412",
+    "TYPE": "Pvt.",
+    "NAME OF THE COLLEGE": "Luckky College of Pharmaceutical Sciences",
+    "COURSES OFFERED": "B.PHARM",
+    "DISTRICT": "Khurda",
+    "ADDRESS": "At-Mahavir Nagar, Po-Palashpur,,Bhubaneswar, Dist-Khurda"
+  }
+]

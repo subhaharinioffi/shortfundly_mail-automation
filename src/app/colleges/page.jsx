@@ -21,7 +21,8 @@ import {
   CopyCheck, 
   X,
   Mail,
-  Building
+  Building,
+  Sparkles
 } from 'lucide-react';
 
 export default function CollegesPage() {
@@ -34,12 +35,18 @@ export default function CollegesPage() {
   const [stats, setStats] = useState({ total: 0, sent: 0, uncontacted: 0, failed: 0 });
   const [loading, setLoading] = useState(true);
 
-  // Filters & Pagination
+  // Filters, Pagination & Batch Partitioning
   const [search, setSearch] = useState('');
   const [selectedCity, setSelectedCity] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [batchSize, setBatchSize] = useState(50);
+
+  // Input & Import Panel State
+  const [showInputPanel, setShowInputPanel] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Modals state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -77,8 +84,9 @@ export default function CollegesPage() {
         search,
         city: selectedCity,
         status: selectedStatus,
+        department: selectedDepartment,
         page: String(page),
-        limit: '25',
+        limit: String(batchSize),
       });
       const res = await fetch(`/api/colleges?${params.toString()}`);
       const data = await res.json();
@@ -103,7 +111,29 @@ export default function CollegesPage() {
     } else if (status === 'authenticated') {
       fetchColleges();
     }
-  }, [status, search, selectedCity, selectedStatus, page]);
+  }, [status, search, selectedCity, selectedStatus, selectedDepartment, page, batchSize]);
+
+  // Drag and drop handlers
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setImportFile(e.dataTransfer.files[0]);
+    }
+  };
 
   // Handle Add College
   const handleAddSubmit = async (e) => {
@@ -271,16 +301,16 @@ export default function CollegesPage() {
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button 
-            onClick={() => { setShowImportModal(true); setImportResult(null); }}
-            className="btn btn-secondary btn-sm"
+            onClick={() => { setShowInputPanel(!showInputPanel); setImportResult(null); }}
+            className={`btn btn-sm ${showInputPanel ? 'btn-primary' : 'btn-secondary'}`}
           >
             <Upload size={14} />
-            <span>Upload Odisha Dataset</span>
+            <span>{showInputPanel ? 'Hide Input Panel' : 'Upload Odisha Dataset'}</span>
           </button>
 
           <button 
             onClick={() => setShowAddModal(true)}
-            className="btn btn-primary btn-sm"
+            className="btn btn-secondary btn-sm"
           >
             <Plus size={14} />
             <span>Add Single College</span>
@@ -310,6 +340,186 @@ export default function CollegesPage() {
           >
             <X size={14} />
           </button>
+        </div>
+      )}
+
+      {/* ================= CLEAN & PROFESSIONAL LOADABLE UNSTRESS INPUT PANEL ================= */}
+      {(showInputPanel || total === 0) && (
+        <div className="card" style={{
+          border: '1px solid rgba(255, 50, 75, 0.3)',
+          background: 'linear-gradient(180deg, rgba(22, 29, 46, 0.95) 0%, rgba(13, 17, 27, 0.98) 100%)',
+          padding: '20px 24px',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)',
+          position: 'relative'
+        }}>
+          {total > 0 && (
+            <button 
+              onClick={() => setShowInputPanel(false)}
+              style={{ position: 'absolute', right: '16px', top: '16px', background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
+              title="Collapse Panel"
+            >
+              <X size={16} />
+            </button>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+            <FileSpreadsheet size={20} color="#FF324B" />
+            <h2 style={{ fontSize: '17px', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
+              Odisha Colleges Dataset Input &amp; Sync Panel
+            </h2>
+            <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(56, 189, 248, 0.15)', color: '#38BDF8', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+              Supports .xlsx &amp; .csv
+            </span>
+          </div>
+          <p style={{ fontSize: '13px', color: '#94A3B8', marginBottom: '16px' }}>
+            Upload your official Odisha Colleges spreadsheet (<code style={{ color: '#38BDF8' }}>Odisha_Colleges_Master_Unique_Directory.xlsx</code> or <code style={{ color: '#38BDF8' }}>Orissa_Colleges_Complete_Email_Directory.xlsx</code>). The engine automatically resolves standardized college names, verified leadership emails, websites, districts, and verification sources.
+          </p>
+
+          <form onSubmit={handleImportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            
+            {/* Drag & Drop File Zone */}
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              style={{
+                border: isDragging ? '2px dashed #FF324B' : '2px dashed rgba(255, 255, 255, 0.15)',
+                background: isDragging ? 'rgba(255, 50, 75, 0.08)' : 'rgba(7, 9, 14, 0.6)',
+                borderRadius: '10px',
+                padding: '24px 20px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                position: 'relative'
+              }}
+              onClick={() => document.getElementById('college-file-input')?.click()}
+            >
+              <input
+                id="college-file-input"
+                type="file"
+                accept=".xlsx,.xls,.csv,.txt"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                style={{ display: 'none' }}
+              />
+
+              {importFile ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10B981', fontWeight: 600 }}>
+                    <CheckCircle2 size={20} />
+                    <span>File Selected: {importFile.name}</span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#94A3B8' }}>
+                    Size: {(importFile.size / 1024).toFixed(1)} KB • Click or drop another file to change
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                  <Upload size={32} color="#64748B" />
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#E2E8F0' }}>
+                    Drag &amp; drop your Odisha Colleges XLSX or CSV file here, or <span style={{ color: '#FF324B', textDecoration: 'underline' }}>browse</span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748B' }}>
+                    Max recommended size: 25 MB • Zero server lag • Fast local parsing
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Recognized Data Fields Tag Strip */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', fontSize: '11px', color: '#94A3B8' }}>
+              <span style={{ fontWeight: 600, color: '#CBD5E1' }}>Recognized Inputs:</span>
+              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 6px', borderRadius: '4px' }}>✓ College Name (Standardized)</span>
+              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 6px', borderRadius: '4px' }}>✓ Official Emails (Combined)</span>
+              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 6px', borderRadius: '4px' }}>✓ District / Location</span>
+              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 6px', borderRadius: '4px' }}>✓ Official Website</span>
+              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 6px', borderRadius: '4px' }}>✓ Principal &amp; Contact Mobile</span>
+              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 6px', borderRadius: '4px' }}>✓ Category / Stream / Affiliation</span>
+              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 6px', borderRadius: '4px' }}>✓ Verification Source URL</span>
+            </div>
+
+            {/* Mode Selector and Submit Button */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '12px',
+              paddingTop: '10px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.06)'
+            }}>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', color: '#E2E8F0' }}>
+                  <input
+                    type="radio"
+                    name="inputMode"
+                    value="upsert"
+                    checked={importMode === 'upsert'}
+                    onChange={() => setImportMode('upsert')}
+                  />
+                  <span><strong>Sync &amp; Update</strong> (Safely add new colleges &amp; update contacts)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', color: '#E2E8F0' }}>
+                  <input
+                    type="radio"
+                    name="inputMode"
+                    value="replace"
+                    checked={importMode === 'replace'}
+                    onChange={() => setImportMode('replace')}
+                  />
+                  <span><strong>Fresh Import</strong> (Replace all records with this file)</span>
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="submit"
+                  disabled={importing || !importFile}
+                  className="btn btn-primary"
+                  style={{ minWidth: '180px' }}
+                >
+                  {importing ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin" />
+                      <span>Processing &amp; Loading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={14} />
+                      <span>Load Dataset into Database</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Result Summary Bar if Import Completed */}
+            {importResult && (
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '10px'
+              }}>
+                <div style={{ fontSize: '12px', color: '#E2E8F0' }}>
+                  ✓ <strong>Dataset Load Complete:</strong> Saved <strong>{importResult.stats.totalProcessed ?? importResult.stats.inserted}</strong> verified colleges ({importResult.stats.inserted} new added, {importResult.stats.updated || 0} updated, {importResult.stats.skippedDuplicates || 0} duplicate emails filtered).
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setImportResult(null); setImportFile(null); }}
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: '11px', padding: '3px 8px' }}
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
+          </form>
         </div>
       )}
 
@@ -374,7 +584,7 @@ export default function CollegesPage() {
           </div>
 
           {/* Status Filter */}
-          <div style={{ width: '180px' }}>
+          <div style={{ width: '170px' }}>
             <select
               value={selectedStatus}
               onChange={(e) => { setSelectedStatus(e.target.value); setPage(1); }}
@@ -382,16 +592,32 @@ export default function CollegesPage() {
               style={{ fontSize: '13px' }}
             >
               <option value="all">All Outreach Status</option>
-              <option value="uncontacted">Uncontacted</option>
+              <option value="uncontacted">Uncontacted Only</option>
               <option value="sent">Sent</option>
               <option value="failed">Failed</option>
             </select>
           </div>
 
+          {/* Role / Department Filter */}
+          <div style={{ width: '190px' }}>
+            <select
+              value={selectedDepartment}
+              onChange={(e) => { setSelectedDepartment(e.target.value); setPage(1); }}
+              className="form-select"
+              style={{ fontSize: '13px' }}
+            >
+              <option value="all">All Roles &amp; Staff</option>
+              <option value="principal">👑 Principals &amp; Leadership</option>
+              <option value="hod">🎓 HODs (Head of Dept)</option>
+              <option value="faculty">🔬 Faculty &amp; Staff</option>
+              <option value="admin">🏢 Administration / General</option>
+            </select>
+          </div>
+
           {/* Reset Filters */}
-          {(search || selectedCity !== 'all' || selectedStatus !== 'all') && (
+          {(search || selectedCity !== 'all' || selectedStatus !== 'all' || selectedDepartment !== 'all') && (
             <button
-              onClick={() => { setSearch(''); setSelectedCity('all'); setSelectedStatus('all'); setPage(1); }}
+              onClick={() => { setSearch(''); setSelectedCity('all'); setSelectedStatus('all'); setSelectedDepartment('all'); setPage(1); }}
               className="btn btn-secondary btn-sm"
               title="Reset Filters"
             >
@@ -400,8 +626,132 @@ export default function CollegesPage() {
             </button>
           )}
 
+          {/* Quick Launch Campaign Link */}
+          <Link
+            href="/campaigns"
+            className="btn btn-primary btn-sm"
+            style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <Send size={13} />
+            <span>Automated Campaigns →</span>
+          </Link>
+
         </div>
       </div>
+
+      {/* ================= AUTO SEPARATE BATCH SYSTEM WITH APPLIED FILTERS ================= */}
+      {total > 0 && (
+        <div style={{
+          background: 'linear-gradient(180deg, rgba(31, 73, 125, 0.12) 0%, rgba(15, 23, 42, 0.3) 100%)',
+          border: '1px solid rgba(56, 189, 248, 0.2)',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Sparkles size={16} color="#38BDF8" />
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#38BDF8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Auto Batch Partitioning (Filtered Leads)
+              </span>
+              <span style={{ fontSize: '12px', color: '#94A3B8' }}>
+                • {total} matching colleges split into {totalPages} batches ({batchSize} per batch)
+              </span>
+            </div>
+
+            {/* Batch Size Selector Buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '11px', color: '#64748B' }}>Batch Size:</span>
+              {[25, 50, 100, 200].map(sz => (
+                <button
+                  key={sz}
+                  type="button"
+                  onClick={() => { setBatchSize(sz); setPage(1); }}
+                  className="btn btn-sm"
+                  style={{
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    background: batchSize === sz ? '#FF324B' : 'rgba(255, 255, 255, 0.05)',
+                    color: batchSize === sz ? '#FFFFFF' : '#94A3B8',
+                    border: '1px solid ' + (batchSize === sz ? '#FF324B' : 'rgba(255, 255, 255, 0.1)')
+                  }}
+                >
+                  {sz}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Interactive Batch Pills Ribbon */}
+          <div style={{
+            display: 'flex',
+            gap: '6px',
+            overflowX: 'auto',
+            paddingBottom: '4px',
+            scrollbarWidth: 'thin'
+          }}>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((batchNum) => {
+              const isActive = page === batchNum;
+              const startIdx = (batchNum - 1) * batchSize + 1;
+              const endIdx = Math.min(batchNum * batchSize, total);
+
+              return (
+                <button
+                  key={batchNum}
+                  type="button"
+                  onClick={() => setPage(batchNum)}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    minWidth: '115px',
+                    cursor: 'pointer',
+                    border: isActive ? '1px solid #FF324B' : '1px solid rgba(255, 255, 255, 0.08)',
+                    background: isActive ? 'rgba(255, 50, 75, 0.18)' : 'rgba(15, 23, 42, 0.6)',
+                    color: isActive ? '#FFFFFF' : '#94A3B8',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: isActive ? '#FF6B7E' : '#E2E8F0' }}>
+                    Batch #{batchNum}
+                  </span>
+                  <span style={{ fontSize: '10px', color: '#64748B', marginTop: '2px' }}>
+                    Leads {startIdx}–{endIdx}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Batch Quick Action Bar */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '8px',
+            paddingTop: '6px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.06)'
+          }}>
+            <span style={{ fontSize: '12px', color: '#94A3B8' }}>
+              Currently viewing <strong>Batch #{page}</strong> (leads {Math.min((page - 1) * batchSize + 1, total)} to {Math.min(page * batchSize, total)} of {total})
+            </span>
+            <Link
+              href="/campaigns"
+              className="btn btn-primary btn-sm"
+              style={{ fontSize: '11px', padding: '4px 12px' }}
+            >
+              <Send size={12} />
+              <span>Launch Outreach with Batch #{page} →</span>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Colleges Data Table */}
       <div className="table-wrapper">
@@ -427,10 +777,32 @@ export default function CollegesPage() {
               </tr>
             ) : colleges.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '48px 20px', color: '#94A3B8' }}>
-                  <GraduationCap size={36} style={{ color: '#64748B', margin: '0 auto 12px' }} />
-                  <div style={{ fontSize: '15px', fontWeight: 600, color: '#FFFFFF' }}>No Colleges Found</div>
-                  <div style={{ fontSize: '13px', marginTop: '4px' }}>Try adjusting your search query or upload the official dataset.</div>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '52px 20px', color: '#94A3B8' }}>
+                  {total === 0 ? (
+                    <div>
+                      <GraduationCap size={40} style={{ color: '#64748B', margin: '0 auto 12px' }} />
+                      <div style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF' }}>Database is Clean &amp; Ready</div>
+                      <div style={{ fontSize: '13px', color: '#94A3B8', maxWidth: '420px', margin: '6px auto 16px' }}>
+                        No colleges are currently in the database. Use the input panel above to upload your official Odisha colleges spreadsheet (.xlsx or .csv).
+                      </div>
+                      <button 
+                        onClick={() => setShowInputPanel(true)} 
+                        className="btn btn-primary btn-sm"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        <Upload size={14} />
+                        <span>Open Dataset Input Panel</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <Search size={36} style={{ color: '#64748B', margin: '0 auto 12px' }} />
+                      <div style={{ fontSize: '15px', fontWeight: 600, color: '#FFFFFF' }}>No Matching Colleges Found</div>
+                      <div style={{ fontSize: '13px', marginTop: '4px' }}>
+                        Try adjusting your search query, city filter, or role filter.
+                      </div>
+                    </div>
+                  )}
                 </td>
               </tr>
             ) : (

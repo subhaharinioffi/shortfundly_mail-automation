@@ -183,170 +183,61 @@ export default function DashboardPage() {
 
       </div>
 
-      {/* Progress & Quick Actions Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '24px' }}>
-        
-        {/* Campaign Coverage Progress */}
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <div className="card-title">
-                <FilmstripIcon size={18} color="#FF324B" />
-                <span>Odisha Outreach Saturation</span>
-              </div>
-              <div className="card-subtitle">
-                Progress towards contacting all institutions across Odisha
-              </div>
+      {/* Campaign Coverage Progress Card */}
+      <div className="card">
+        <div className="card-header">
+          <div>
+            <div className="card-title">
+              <FilmstripIcon size={18} color="#FF324B" />
+              <span>Odisha Outreach Saturation</span>
             </div>
-            <span style={{ fontSize: '18px', fontWeight: 800, color: '#FF324B' }}>
-              {coveragePercent}%
-            </span>
-          </div>
-
-          <div style={{ background: 'rgba(255, 255, 255, 0.05)', borderRadius: '9999px', height: '10px', overflow: 'hidden', marginBottom: '20px' }}>
-            <div 
-              style={{ 
-                width: `${coveragePercent}%`, 
-                height: '100%', 
-                background: 'linear-gradient(90deg, #FF324B, #FF6B7E)', 
-                transition: 'width 0.6s ease' 
-              }} 
-            />
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', textAlign: 'center', background: 'rgba(7, 9, 14, 0.6)', padding: '14px', borderRadius: '8px' }}>
-            <div>
-              <div style={{ fontSize: '11px', color: '#94A3B8' }}>Contacted</div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: '#10B981' }}>{stats.sentColleges}</div>
-            </div>
-            <div style={{ borderLeft: '1px solid rgba(255, 255, 255, 0.08)', borderRight: '1px solid rgba(255, 255, 255, 0.08)' }}>
-              <div style={{ fontSize: '11px', color: '#94A3B8' }}>Uncontacted</div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: '#F59E0B' }}>{stats.uncontactedColleges}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '11px', color: '#94A3B8' }}>Failed Attempts</div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: stats.failedColleges > 0 ? '#EF4444' : '#64748B' }}>
-                {stats.failedColleges}
-              </div>
+            <div className="card-subtitle">
+              Progress towards contacting all institutions across Odisha
             </div>
           </div>
+          <span style={{ fontSize: '18px', fontWeight: 800, color: '#FF324B' }}>
+            {coveragePercent}%
+          </span>
+        </div>
 
-          <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-            <Link href="/campaigns" className="btn btn-primary" style={{ flex: 1 }}>
-              <Send size={14} />
-              <span>Continue Outreach</span>
-            </Link>
-            <Link href="/colleges" className="btn btn-secondary">
-              <Upload size={14} />
-              <span>Import Dataset</span>
-            </Link>
+        <div style={{ background: 'rgba(255, 255, 255, 0.05)', borderRadius: '9999px', height: '10px', overflow: 'hidden', marginBottom: '20px' }}>
+          <div 
+            style={{ 
+              width: `${coveragePercent}%`, 
+              height: '100%', 
+              background: 'linear-gradient(90deg, #FF324B, #FF6B7E)', 
+              transition: 'width 0.6s ease' 
+            }} 
+          />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', textAlign: 'center', background: 'rgba(7, 9, 14, 0.6)', padding: '14px', borderRadius: '8px' }}>
+          <div>
+            <div style={{ fontSize: '11px', color: '#94A3B8' }}>Contacted</div>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#10B981' }}>{stats.sentColleges}</div>
+          </div>
+          <div style={{ borderLeft: '1px solid rgba(255, 255, 255, 0.08)', borderRight: '1px solid rgba(255, 255, 255, 0.08)' }}>
+            <div style={{ fontSize: '11px', color: '#94A3B8' }}>Uncontacted</div>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#F59E0B' }}>{stats.uncontactedColleges}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '11px', color: '#94A3B8' }}>Failed Attempts</div>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: stats.failedColleges > 0 ? '#EF4444' : '#64748B' }}>
+              {stats.failedColleges}
+            </div>
           </div>
         </div>
 
-        {/* Quick Operations Matrix */}
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <div className="card-title">
-                <ClapperboardIcon size={18} color="#FF324B" />
-                <span>Workflow Action Center</span>
-              </div>
-              <div className="card-subtitle">
-                Access all dedicated workflow interfaces
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            
-            <Link href="/colleges" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              padding: '12px 16px', 
-              background: 'rgba(255, 255, 255, 0.02)', 
-              borderRadius: '8px', 
-              border: '1px solid var(--border-subtle)', 
-              textDecoration: 'none', 
-              color: '#FFFFFF',
-              transition: 'all 0.2s ease'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <GraduationCap size={18} color="#FF324B" />
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 600 }}>College Directory</div>
-                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>Verified official emails, websites, CSV dataset import &amp; de-duplication</div>
-                </div>
-              </div>
-              <ArrowRight size={14} color="#64748B" />
-            </Link>
-
-            <Link href="/templates" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              padding: '12px 16px', 
-              background: 'rgba(255, 255, 255, 0.02)', 
-              borderRadius: '8px', 
-              border: '1px solid var(--border-subtle)', 
-              textDecoration: 'none', 
-              color: '#FFFFFF' 
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <FileText size={18} color="#06B6D4" />
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 600 }}>Email Templates</div>
-                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>Shortfundly Campus proposal with variable dynamic tokens</div>
-                </div>
-              </div>
-              <ArrowRight size={14} color="#64748B" />
-            </Link>
-
-            <Link href="/campaigns" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              padding: '12px 16px', 
-              background: 'rgba(255, 255, 255, 0.02)', 
-              borderRadius: '8px', 
-              border: '1px solid var(--border-subtle)', 
-              textDecoration: 'none', 
-              color: '#FFFFFF' 
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Send size={18} color="#10B981" />
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 600 }}>Automated Campaigns</div>
-                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>Google SMTP batch sender with live progress tracking</div>
-                </div>
-              </div>
-              <ArrowRight size={14} color="#64748B" />
-            </Link>
-
-            <Link href="/manual-send" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              padding: '12px 16px', 
-              background: 'rgba(255, 255, 255, 0.02)', 
-              borderRadius: '8px', 
-              border: '1px solid var(--border-subtle)', 
-              textDecoration: 'none', 
-              color: '#FFFFFF' 
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <PenTool size={18} color="#F59E0B" />
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 600 }}>Direct Send</div>
-                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>Direct single-college entry with bespoke customized proposal</div>
-                </div>
-              </div>
-              <ArrowRight size={14} color="#64748B" />
-            </Link>
-
-          </div>
+        <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+          <Link href="/campaigns" className="btn btn-primary" style={{ flex: 1 }}>
+            <Send size={14} />
+            <span>Continue Outreach</span>
+          </Link>
+          <Link href="/colleges" className="btn btn-secondary">
+            <Upload size={14} />
+            <span>Import Dataset</span>
+          </Link>
         </div>
-
       </div>
 
       {/* Recent Email Activity Table */}

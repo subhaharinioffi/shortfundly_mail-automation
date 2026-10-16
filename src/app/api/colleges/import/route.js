@@ -141,113 +141,170 @@ export async function POST(req) {
 
     const transaction = db.transaction((items) => {
       for (const row of items) {
-        // Flexible key resolution for Excel and CSV column variations
         const college_name = (
-          row['Name'] || 
-          row['College Name'] || 
-          row['college_name'] || 
-          row['College'] || 
-          row['COLLEGE NAME'] || 
-          row['COLLEGE'] || 
-          row['Institute'] || 
-          row['INSTITUTE'] || 
-          row['Institution'] || 
-          row['INSTITUTION'] || 
-          ''
-        ).trim();
+            row['College Name (Standardized)'] || 
+            row['College Name'] || 
+            row['college_name'] || 
+            row['College'] || 
+            row['COLLEGE NAME'] || 
+            row['COLLEGE'] || 
+            row['Name'] || 
+            row['NAME'] || 
+            row['Institute'] || 
+            row['INSTITUTE'] || 
+            row['Institution'] || 
+            row['INSTITUTION'] || 
+            ''
+          ).trim();
 
-        const rawEmail = String(
-          row['Official Email'] || 
-          row['Official email address'] || 
-          row['email'] || 
-          row['Email'] || 
-          row['EMAIL'] || 
-          row['Official Email Address'] || 
-          row['Mail'] || 
-          row['MAIL'] || 
-          row['Email ID'] || 
-          row['EMAIL ID'] || 
-          ''
-        ).trim();
+          const rawEmails = [
+            row['All Unique Emails (Combined)'],
+            row['Principal Official Email'],
+            row['Principal / Dean / Leadership Emails'],
+            row['Dean / Leadership Emails'],
+            row['General / Office Emails'],
+            row['General / Office Enquiry Emails'],
+            row['HOD Emails (Head of Dept)'],
+            row['Department Faculty & Staff Emails'],
+            row['Official Email Address'],
+            row['Official email address'],
+            row['Official Email'],
+            row['email'],
+            row['Email'],
+            row['EMAIL'],
+            row['Email ID'],
+            row['EMAIL ID'],
+            row['Mail'],
+            row['MAIL']
+          ].filter(Boolean).map(String).join(';');
 
-        // Extract valid email addresses (handles single emails or semicolon/comma-separated lists)
-        const emailMatches = rawEmail.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
-        const email = emailMatches[0] ? emailMatches[0].toLowerCase().trim() : '';
+          const emailMatches = rawEmails.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
+          const uniqueEmails = [...new Set(emailMatches.map(e => e.toLowerCase().trim()))];
+          const email = uniqueEmails[0] || '';
 
-        const city = (
-          row['City / District'] || 
-          row['City'] || 
-          row['city'] || 
-          row['CITY'] || 
-          row['District'] || 
-          row['DISTRICT'] || 
-          row['Location'] || 
-          row['LOCATION'] || 
-          'Bhubaneswar'
-        ).trim();
+          let city = (
+            row['District'] || 
+            row['District / City'] || 
+            row['City / District'] || 
+            row['Block / City'] || 
+            row['City'] || 
+            row['city'] || 
+            row['CITY'] || 
+            row['Location'] || 
+            row['LOCATION'] || 
+            'Bhubaneswar'
+          ).trim();
 
-        const state = (row['State'] || row['state'] || row['STATE'] || 'Odisha').trim();
+          if (city.toLowerCase() === 'null' || city.toLowerCase() === 'n/a' || !city) {
+            city = 'Bhubaneswar';
+          }
 
-        const website_url = (
-          row['Official Website'] || 
-          row['Official website URL'] || 
-          row['Official Website URL'] || 
-          row['website_url'] || 
-          row['Website'] || 
-          row['Website URL'] || 
-          row['WEBSITE'] || 
-          row['URL'] || 
-          row['Web'] || 
-          row['WEB'] || 
-          ''
-        ).trim();
+          const state = (row['State'] || row['state'] || row['STATE'] || 'Odisha').trim();
 
-        const department = (
-          row['Parent / Affiliating University'] || 
-          row['Type'] || 
-          row['Department or contact person'] || 
-          row['Department'] || 
-          row['department'] || 
-          row['DEPARTMENT'] || 
-          row['Dept'] || 
-          row['DEPT'] || 
-          ''
-        ).trim() || null;
+          let website_url = (
+            row['Official Website'] || 
+            row['Official website URL'] || 
+            row['Official Website URL'] || 
+            row['website_url'] || 
+            row['Website'] || 
+            row['Website URL'] || 
+            row['WEBSITE'] || 
+            row['URL'] || 
+            row['Web'] || 
+            row['WEB'] || 
+            ''
+          ).trim();
 
-        const contact_person = (
-          row['Contact Office / Person'] || 
-          row['Contact Person'] || 
-          row['contact_person'] || 
-          row['Contact person'] || 
-          row['CONTACT PERSON'] || 
-          row['Contact'] || 
-          row['CONTACT'] || 
-          ''
-        ).trim() || null;
+          if (['-', '--', 'n/a', 'na', 'none', 'null', 'nil', '#n/a'].includes(website_url.toLowerCase())) {
+            website_url = '';
+          } else if (website_url && !website_url.startsWith('http://') && !website_url.startsWith('https://')) {
+            if (website_url.includes('.') && !website_url.includes(' ')) {
+              website_url = `https://${website_url}`;
+            }
+          }
 
-        const source_page_url = (
-          row['Email Source'] || 
-          row['Source page URL'] || 
-          row['Source Page URL'] || 
-          row['source_page_url'] || 
-          row['Source'] || 
-          row['SOURCE'] || 
-          row['Source URL'] || 
-          row['SOURCE URL'] || 
-          website_url || 
-          ''
-        ).trim();
+          let contact_person = (
+            row['Principal / Head Name (Govt Verified)'] || 
+            row['Principal / Head Name'] || 
+            row['Principal Name'] || 
+            row['Principal / Head'] || 
+            row['Admission In-Charge (Name & Mobile)'] || 
+            row['Contact Office / Person'] || 
+            row['Contact Person'] || 
+            row['contact_person'] || 
+            row['Contact person'] || 
+            row['CONTACT PERSON'] || 
+            row['Contact'] || 
+            row['CONTACT'] || 
+            ''
+          ).trim() || null;
 
-        let notes = (row['Notes'] || row['notes'] || row['NOTES'] || row['Remarks'] || row['REMARKS'] || '').trim() || null;
-        if (emailMatches.length > 1) {
-          const alternate = emailMatches.slice(1).join(', ');
-          notes = notes ? `${notes} | Alternate Emails: ${alternate}` : `Alternate Emails: ${alternate}`;
-        }
+          let department = (
+            row['Category / Stream'] || 
+            row['College Type / Category'] || 
+            row['Affiliated University / Board'] || 
+            row['Affiliated University'] || 
+            row['Parent / Affiliating University'] || 
+            row['Type'] || 
+            row['Department or contact person'] || 
+            row['Department'] || 
+            row['department'] || 
+            row['DEPARTMENT'] || 
+            row['Dept'] || 
+            row['DEPT'] || 
+            ''
+          ).trim() || null;
 
-        if (!college_name || !email) {
-          invalidCount++;
-          continue;
-        }
+          let source_page_url = (
+            row['Data Verification Sources'] || 
+            row['IndCareer Profile Link'] || 
+            row['Email Source'] || 
+            row['Source page URL'] || 
+            row['Source Page URL'] || 
+            row['source_page_url'] || 
+            row['Source'] || 
+            row['SOURCE'] || 
+            row['Source URL'] || 
+            row['SOURCE URL'] || 
+            website_url || 
+            'Official Directory'
+          ).trim();
+
+          const noteParts = [];
+          const rawNotes = (row['Notes'] || row['notes'] || row['NOTES'] || row['Remarks'] || row['REMARKS'] || '').trim();
+          if (rawNotes) noteParts.push(rawNotes);
+
+          const phone = (
+            row['Principal Direct Mobile'] || 
+            row['Principal Mobile Number'] || 
+            row['Helpline & Office Phones'] || 
+            ''
+          ).trim();
+          if (phone) noteParts.push(`Phone: ${phone}`);
+
+          const sams = (row['SAMS Govt Code'] || '').trim();
+          if (sams) noteParts.push(`SAMS: ${sams}`);
+
+          const aishe = (row['AISHE Code'] || '').trim();
+          if (aishe) noteParts.push(`AISHE: ${aishe}`);
+
+          const bput = (row['BPUT Code'] || row['BPUT Technical Code'] || '').trim();
+          if (bput) noteParts.push(`BPUT: ${bput}`);
+
+          const address = (row['Campus Address & PIN'] || '').trim();
+          if (address) noteParts.push(`Address: ${address}`);
+
+          if (uniqueEmails.length > 1) {
+            const alternates = uniqueEmails.slice(1).join(', ');
+            noteParts.push(`Alternate Emails: ${alternates}`);
+          }
+
+          const notes = noteParts.length > 0 ? noteParts.join(' | ') : null;
+
+          if (!college_name || !email) {
+            invalidCount++;
+            continue;
+          }
 
         // Prevent duplicate rows within the uploaded file itself
         if (seenInBatch.has(email)) {

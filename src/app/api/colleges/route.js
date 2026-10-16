@@ -52,6 +52,23 @@ export async function GET(req) {
       params.push(status.trim());
     }
 
+    const department = searchParams.get('department') || '';
+    if (department.trim() && department !== 'all') {
+      const depLower = department.trim().toLowerCase();
+      if (depLower === 'principal' || depLower === 'leadership') {
+        conditions.push("(department LIKE '%Principal%' OR department LIKE '%Dean%' OR department LIKE '%Leadership%' OR department LIKE '%Govt SAMS%')");
+      } else if (depLower === 'hod') {
+        conditions.push("department LIKE '%HOD%'");
+      } else if (depLower === 'faculty') {
+        conditions.push("(department LIKE '%Faculty%' OR department LIKE '%Professor%' OR department LIKE '%Staff%')");
+      } else if (depLower === 'admin' || depLower === 'general') {
+        conditions.push("(department LIKE '%Admin%' OR department LIKE '%General%' OR department LIKE '%Office%')");
+      } else {
+        conditions.push('department = ?');
+        params.push(department.trim());
+      }
+    }
+
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     const totalStmt = db.prepare(`SELECT count(*) as count FROM colleges ${whereClause}`);
@@ -67,6 +84,7 @@ export async function GET(req) {
     const colleges = listStmt.all(...params, limit, offset);
 
     const cities = db.prepare("SELECT DISTINCT city FROM colleges WHERE city IS NOT NULL AND length(trim(city)) > 0 ORDER BY city ASC").all().map(c => c.city);
+    const departments = db.prepare("SELECT DISTINCT department FROM colleges WHERE department IS NOT NULL AND length(trim(department)) > 0 ORDER BY department ASC").all().map(d => d.department);
 
     const stats = db.prepare(`
       SELECT 
@@ -84,6 +102,7 @@ export async function GET(req) {
       limit,
       totalPages: Math.ceil(total / limit) || 1,
       cities,
+      departments,
       stats: {
         total: stats.total || 0,
         sent: stats.sent || 0,
@@ -222,12 +241,14 @@ export async function POST(req) {
       const transaction = db.transaction((items) => {
         for (const row of items) {
           const college_name = (
-            row['Name'] || 
+            row['College Name (Standardized)'] || 
             row['College Name'] || 
             row['college_name'] || 
             row['College'] || 
             row['COLLEGE NAME'] || 
             row['COLLEGE'] || 
+            row['Name'] || 
+            row['NAME'] || 
             row['Institute'] || 
             row['INSTITUTE'] || 
             row['Institution'] || 
@@ -235,38 +256,51 @@ export async function POST(req) {
             ''
           ).trim();
 
-          const rawEmail = String(
-            row['Official Email'] || 
-            row['Official email address'] || 
-            row['email'] || 
-            row['Email'] || 
-            row['EMAIL'] || 
-            row['Official Email Address'] || 
-            row['Mail'] || 
-            row['MAIL'] || 
-            row['Email ID'] || 
-            row['EMAIL ID'] || 
-            ''
-          ).trim();
+          const rawEmails = [
+            row['All Unique Emails (Combined)'],
+            row['Principal Official Email'],
+            row['Principal / Dean / Leadership Emails'],
+            row['Dean / Leadership Emails'],
+            row['General / Office Emails'],
+            row['General / Office Enquiry Emails'],
+            row['HOD Emails (Head of Dept)'],
+            row['Department Faculty & Staff Emails'],
+            row['Official Email Address'],
+            row['Official email address'],
+            row['Official Email'],
+            row['email'],
+            row['Email'],
+            row['EMAIL'],
+            row['Email ID'],
+            row['EMAIL ID'],
+            row['Mail'],
+            row['MAIL']
+          ].filter(Boolean).map(String).join(';');
 
-          const emailMatches = rawEmail.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
-          const email = emailMatches[0] ? emailMatches[0].toLowerCase().trim() : '';
+          const emailMatches = rawEmails.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
+          const uniqueEmails = [...new Set(emailMatches.map(e => e.toLowerCase().trim()))];
+          const email = uniqueEmails[0] || '';
 
-          const city = (
+          let city = (
+            row['District'] || 
+            row['District / City'] || 
             row['City / District'] || 
+            row['Block / City'] || 
             row['City'] || 
             row['city'] || 
             row['CITY'] || 
-            row['District'] || 
-            row['DISTRICT'] || 
             row['Location'] || 
             row['LOCATION'] || 
             'Bhubaneswar'
           ).trim();
 
+          if (city.toLowerCase() === 'null' || city.toLowerCase() === 'n/a' || !city) {
+            city = 'Bhubaneswar';
+          }
+
           const state = (row['State'] || row['state'] || row['STATE'] || 'Odisha').trim();
 
-          const website_url = (
+          let website_url = (
             row['Official Website'] || 
             row['Official website URL'] || 
             row['Official Website URL'] || 
@@ -280,7 +314,35 @@ export async function POST(req) {
             ''
           ).trim();
 
-          const department = (
+          if (['-', '--', 'n/a', 'na', 'none', 'null', 'nil', '#n/a'].includes(website_url.toLowerCase())) {
+            website_url = '';
+          } else if (website_url && !website_url.startsWith('http://') && !website_url.startsWith('https://')) {
+            if (website_url.includes('.') && !website_url.includes(' ')) {
+              website_url = `https://${website_url}`;
+            }
+          }
+
+          let contact_person = (
+            row['Principal / Head Name (Govt Verified)'] || 
+            row['Principal / Head Name'] || 
+            row['Principal Name'] || 
+            row['Principal / Head'] || 
+            row['Admission In-Charge (Name & Mobile)'] || 
+            row['Contact Office / Person'] || 
+            row['Contact Person'] || 
+            row['contact_person'] || 
+            row['Contact person'] || 
+            row['CONTACT PERSON'] || 
+            row['Contact'] || 
+            row['CONTACT'] || 
+            ''
+          ).trim() || null;
+
+          let department = (
+            row['Category / Stream'] || 
+            row['College Type / Category'] || 
+            row['Affiliated University / Board'] || 
+            row['Affiliated University'] || 
             row['Parent / Affiliating University'] || 
             row['Type'] || 
             row['Department or contact person'] || 
@@ -292,18 +354,9 @@ export async function POST(req) {
             ''
           ).trim() || null;
 
-          const contact_person = (
-            row['Contact Office / Person'] || 
-            row['Contact Person'] || 
-            row['contact_person'] || 
-            row['Contact person'] || 
-            row['CONTACT PERSON'] || 
-            row['Contact'] || 
-            row['CONTACT'] || 
-            ''
-          ).trim() || null;
-
-          const source_page_url = (
+          let source_page_url = (
+            row['Data Verification Sources'] || 
+            row['IndCareer Profile Link'] || 
             row['Email Source'] || 
             row['Source page URL'] || 
             row['Source Page URL'] || 
@@ -313,14 +366,39 @@ export async function POST(req) {
             row['Source URL'] || 
             row['SOURCE URL'] || 
             website_url || 
-            ''
+            'Official Directory'
           ).trim();
 
-          let notes = (row['Notes'] || row['notes'] || row['NOTES'] || row['Remarks'] || row['REMARKS'] || '').trim() || null;
-          if (emailMatches.length > 1) {
-            const alternate = emailMatches.slice(1).join(', ');
-            notes = notes ? `${notes} | Alternate Emails: ${alternate}` : `Alternate Emails: ${alternate}`;
+          const noteParts = [];
+          const rawNotes = (row['Notes'] || row['notes'] || row['NOTES'] || row['Remarks'] || row['REMARKS'] || '').trim();
+          if (rawNotes) noteParts.push(rawNotes);
+
+          const phone = (
+            row['Principal Direct Mobile'] || 
+            row['Principal Mobile Number'] || 
+            row['Helpline & Office Phones'] || 
+            ''
+          ).trim();
+          if (phone) noteParts.push(`Phone: ${phone}`);
+
+          const sams = (row['SAMS Govt Code'] || '').trim();
+          if (sams) noteParts.push(`SAMS: ${sams}`);
+
+          const aishe = (row['AISHE Code'] || '').trim();
+          if (aishe) noteParts.push(`AISHE: ${aishe}`);
+
+          const bput = (row['BPUT Code'] || row['BPUT Technical Code'] || '').trim();
+          if (bput) noteParts.push(`BPUT: ${bput}`);
+
+          const address = (row['Campus Address & PIN'] || '').trim();
+          if (address) noteParts.push(`Address: ${address}`);
+
+          if (uniqueEmails.length > 1) {
+            const alternates = uniqueEmails.slice(1).join(', ');
+            noteParts.push(`Alternate Emails: ${alternates}`);
           }
+
+          const notes = noteParts.length > 0 ? noteParts.join(' | ') : null;
 
           if (!college_name || !email) {
             invalidCount++;
