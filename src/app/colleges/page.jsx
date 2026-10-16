@@ -287,7 +287,7 @@ export default function CollegesPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <span className="role-badge admin">Requirement 1</span>
+            <span className="role-badge admin">INSTITUTIONAL REGISTRY</span>
             <span style={{ fontSize: '12px', color: '#64748B' }}>State: Odisha • Official Websites Only</span>
           </div>
           <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#FFFFFF' }}>

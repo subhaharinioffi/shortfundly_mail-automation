@@ -137,7 +137,7 @@ export default function LogsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <span className="role-badge admin">Requirement 4</span>
+            <span className="role-badge admin">DELIVERY AUDIT &amp; TELEMETRY</span>
             <span style={{ fontSize: '12px', color: '#64748B' }}>Real-Time Delivery Auditing &amp; Safeguards</span>
           </div>
           <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#FFFFFF' }}>

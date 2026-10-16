@@ -211,7 +211,7 @@ export default function TemplatesPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <span className="role-badge admin">Requirement 2</span>
+            <span className="role-badge admin">TEMPLATE STUDIO</span>
             <span style={{ fontSize: '12px', color: '#64748B' }}>Editable Templates • Dynamic Personalization</span>
           </div>
           <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#FFFFFF' }}>

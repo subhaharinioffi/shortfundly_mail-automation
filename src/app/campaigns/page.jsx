@@ -32,12 +32,15 @@ import {
   X,
   Building,
   Mail,
-  UserCheck
+  UserCheck,
+  Lock
 } from 'lucide-react';
 import { FilmstripIcon, PlayCinemaIcon } from '@/components/Icons';
+import { useRole } from '@/context/RoleContext';
 
 export default function CampaignsPage() {
   const { data: session, status } = useSession();
+  const { activeRole } = useRole();
   const router = useRouter();
 
   // Raw Database Data
@@ -991,10 +994,16 @@ export default function CampaignsPage() {
           {/* Throttle Delay Control */}
           <div className="form-group" style={{ marginBottom: '10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-              <label className="form-label" style={{ margin: 0 }}>
-                Sending Delay Between Emails
+              <label className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>Sending Delay Between Emails</span>
+                {activeRole.id === 'CEO' && (
+                  <span style={{ fontSize: '10px', color: '#F59E0B', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    <Lock size={10} />
+                    <span>(CEO Override Locked)</span>
+                  </span>
+                )}
               </label>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#38BDF8', fontFamily: 'monospace' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: activeRole.id === 'CEO' ? '#F59E0B' : '#38BDF8', fontFamily: 'monospace' }}>
                 {throttleDelaySec}s delay / send
               </span>
             </div>
@@ -1003,13 +1012,21 @@ export default function CampaignsPage() {
               min="0.5"
               max="5.0"
               step="0.5"
+              disabled={activeRole.id === 'CEO'}
               value={throttleDelaySec}
               onChange={(e) => setThrottleDelaySec(parseFloat(e.target.value))}
-              style={{ width: '100%', accentColor: '#FF324B', cursor: 'pointer' }}
+              style={{ 
+                width: '100%', 
+                accentColor: activeRole.id === 'CEO' ? '#F59E0B' : '#FF324B', 
+                cursor: activeRole.id === 'CEO' ? 'not-allowed' : 'pointer',
+                opacity: activeRole.id === 'CEO' ? 0.6 : 1
+              }}
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#64748B', marginTop: '2px' }}>
               <span>Fast (0.5s)</span>
-              <span style={{ color: '#10B981' }}>Safe Recommended (1.5s - 2.0s)</span>
+              <span style={{ color: activeRole.id === 'CEO' ? '#F59E0B' : '#10B981' }}>
+                {activeRole.id === 'CEO' ? 'Locked at 1.5s (Executive Safety Standard)' : 'Safe Recommended (1.5s - 2.0s)'}
+              </span>
               <span>Ultra-Safe (5.0s)</span>
             </div>
           </div>

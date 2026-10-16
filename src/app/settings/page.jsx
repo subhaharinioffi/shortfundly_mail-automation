@@ -16,12 +16,15 @@ import {
   ExternalLink, 
   Lock,
   Clock,
-  X
+  X,
+  ShieldAlert
 } from 'lucide-react';
 import { FilmstripIcon } from '@/components/Icons';
+import { useRole } from '@/context/RoleContext';
 
 export default function SettingsPage() {
   const { data: session, status } = useSession();
+  const { activeRole } = useRole();
   const router = useRouter();
 
   const [settings, setSettings] = useState({
@@ -184,6 +187,24 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            {activeRole.id === 'CEO' && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                background: 'rgba(245, 158, 11, 0.1)',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                marginBottom: '16px'
+              }}>
+                <Lock size={16} color="#F59E0B" style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: '12px', color: '#FCD34D', lineHeight: 1.4 }}>
+                  <strong>Executive View (CEO) Active:</strong> Raw SMTP credentials and delivery throttles are locked under executive compliance mode. Switch persona to <strong>Tech Lead</strong> in the top navigation to edit cluster parameters.
+                </span>
+              </div>
+            )}
+
             <div className="form-group">
               <label className="form-label">
                 Google Account / Gmail Address <span className="required">*</span>
@@ -191,10 +212,12 @@ export default function SettingsPage() {
               <input
                 type="email"
                 required
+                disabled={activeRole.id === 'CEO'}
                 placeholder="your-account@gmail.com"
                 value={settings.smtp_user}
                 onChange={(e) => setSettings({ ...settings, smtp_user: e.target.value })}
                 className="form-input"
+                style={activeRole.id === 'CEO' ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
               />
               <div className="form-hint">Used for authenticating with Google SMTP.</div>
             </div>
@@ -205,11 +228,12 @@ export default function SettingsPage() {
               </label>
               <input
                 type="password"
+                disabled={activeRole.id === 'CEO'}
                 placeholder={settings.has_password ? '•••••••••••••••• (Configured)' : '16-character Google app password'}
                 value={settings.smtp_pass}
                 onChange={(e) => setSettings({ ...settings, smtp_pass: e.target.value })}
                 className="form-input"
-                style={{ fontFamily: 'monospace' }}
+                style={{ fontFamily: 'monospace', ...(activeRole.id === 'CEO' ? { opacity: 0.6, cursor: 'not-allowed' } : {}) }}
               />
               <div className="form-hint">
                 Generate this in your Google Account Security tab under &quot;App Passwords&quot;.
@@ -221,18 +245,22 @@ export default function SettingsPage() {
                 <label className="form-label">SMTP Host</label>
                 <input
                   type="text"
+                  disabled={activeRole.id === 'CEO'}
                   value={settings.smtp_host}
                   onChange={(e) => setSettings({ ...settings, smtp_host: e.target.value })}
                   className="form-input"
+                  style={activeRole.id === 'CEO' ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 />
               </div>
               <div>
                 <label className="form-label">SMTP Port</label>
                 <input
                   type="number"
+                  disabled={activeRole.id === 'CEO'}
                   value={settings.smtp_port}
                   onChange={(e) => setSettings({ ...settings, smtp_port: parseInt(e.target.value, 10) })}
                   className="form-input"
+                  style={activeRole.id === 'CEO' ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 />
               </div>
             </div>
@@ -248,10 +276,12 @@ export default function SettingsPage() {
               <label className="form-label">Default From Name</label>
               <input
                 type="text"
+                disabled={activeRole.id === 'CEO'}
                 value={settings.from_name}
                 onChange={(e) => setSettings({ ...settings, from_name: e.target.value })}
                 className="form-input"
                 placeholder="Shortfundly Campus Collaboration"
+                style={activeRole.id === 'CEO' ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
               />
             </div>
 
@@ -259,10 +289,12 @@ export default function SettingsPage() {
               <label className="form-label">Default From / Reply Email</label>
               <input
                 type="email"
+                disabled={activeRole.id === 'CEO'}
                 value={settings.from_email}
                 onChange={(e) => setSettings({ ...settings, from_email: e.target.value })}
                 className="form-input"
                 placeholder="campus@shortfundly.com"
+                style={activeRole.id === 'CEO' ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
               />
             </div>
 
@@ -279,9 +311,11 @@ export default function SettingsPage() {
                 type="number"
                 min="1"
                 max="365"
+                disabled={activeRole.id === 'CEO'}
                 value={settings.duplicate_cooldown_days}
                 onChange={(e) => setSettings({ ...settings, duplicate_cooldown_days: parseInt(e.target.value, 10) })}
                 className="form-input"
+                style={activeRole.id === 'CEO' ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
               />
               <div className="form-hint">
                 Automated campaigns will automatically skip colleges that have already received an email within this many days.
@@ -291,11 +325,22 @@ export default function SettingsPage() {
             <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'flex-end' }}>
               <button
                 type="submit"
-                disabled={saving}
+                disabled={saving || activeRole.id === 'CEO'}
                 className="btn btn-primary"
+                style={activeRole.id === 'CEO' ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                title={activeRole.id === 'CEO' ? 'Locked under CEO Executive View' : 'Save Configuration'}
               >
-                <Save size={14} />
-                <span>{saving ? 'Saving...' : 'Save Configuration'}</span>
+                {activeRole.id === 'CEO' ? (
+                  <>
+                    <Lock size={14} color="#F59E0B" />
+                    <span>Locked (CEO Governance)</span>
+                  </>
+                ) : (
+                  <>
+                    <Save size={14} />
+                    <span>{saving ? 'Saving...' : 'Save Configuration'}</span>
+                  </>
+                )}
               </button>
             </div>
 

@@ -17,13 +17,23 @@ import {
   Clock, 
   ShieldCheck, 
   RefreshCw, 
-  CheckCircle2, 
-  Upload 
+  Upload,
+  Crown,
+  Users,
+  Terminal,
+  Lock,
+  Download,
+  FileSpreadsheet,
+  Layers,
+  Zap,
+  Activity
 } from 'lucide-react';
 import { FilmstripIcon, ClapperboardIcon, PlayCinemaIcon } from '@/components/Icons';
+import { useRole } from '@/context/RoleContext';
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
+  const { activeRole } = useRole();
   const router = useRouter();
 
   const [stats, setStats] = useState({
@@ -136,6 +146,205 @@ export default function DashboardPage() {
             <span>Manual Send</span>
           </Link>
         </div>
+      </div>
+
+      {/* Tailored Persona Cockpit Widget */}
+      <div 
+        style={{
+          background: `linear-gradient(135deg, ${activeRole.bgColor} 0%, rgba(15, 23, 42, 0.7) 100%)`,
+          border: `1px solid ${activeRole.borderColor}`,
+          borderRadius: '12px',
+          padding: '20px 24px',
+          boxShadow: `0 4px 20px ${activeRole.glowColor}`,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div 
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
+                background: activeRole.color,
+                color: '#000000',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}
+            >
+              {activeRole.id === 'CEO' && <Crown size={20} />}
+              {(activeRole.id === 'HR / Outreach Lead' || activeRole.id === 'HR') && <Users size={20} />}
+              {activeRole.id === 'Tech Lead' && <Terminal size={20} />}
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>
+                  {activeRole.viewName}: {activeRole.title} Cockpit
+                </span>
+                <span className={`role-badge ${activeRole.badgeClass}`} style={{ fontSize: '10px' }}>
+                  Live Persona
+                </span>
+              </div>
+              <p style={{ fontSize: '12px', color: '#CBD5E1', margin: '2px 0 0 0' }}>
+                {activeRole.summary}
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Context Actions */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {activeRole.id === 'CEO' && (
+              <>
+                <a 
+                  href="/Odisha_Colleges_Master_Unique_Directory.xlsx" 
+                  download 
+                  className="btn btn-secondary btn-sm"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <FileSpreadsheet size={14} color="#F59E0B" />
+                  <span>Master Directory (XLSX)</span>
+                </a>
+                <a 
+                  href="/SHORTFUNDLY_CAMPUS_EMAIL_AUTOMATION_DOCUMENTATION.docx" 
+                  download 
+                  className="btn btn-secondary btn-sm"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Download size={14} color="#F59E0B" />
+                  <span>Executive Brief (DOCX)</span>
+                </a>
+              </>
+            )}
+
+            {(activeRole.id === 'HR / Outreach Lead' || activeRole.id === 'HR') && (
+              <>
+                <Link href="/colleges" className="btn btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <GraduationCap size={14} color="#10B981" />
+                  <span>Institutional Registry</span>
+                </Link>
+                <Link href="/templates" className="btn btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <FileText size={14} color="#10B981" />
+                  <span>Template Studio</span>
+                </Link>
+              </>
+            )}
+
+            {activeRole.id === 'Tech Lead' && (
+              <>
+                <Link href="/settings" className="btn btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <Zap size={14} color="#06B6D4" />
+                  <span>SMTP Node Console</span>
+                </Link>
+                <Link href="/logs" className="btn btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <Activity size={14} color="#06B6D4" />
+                  <span>Telemetry Audit</span>
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Tailored Focus Strip */}
+        {activeRole.id === 'CEO' && (
+          <div style={{ background: 'rgba(0, 0, 0, 0.4)', borderRadius: '8px', padding: '12px 16px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#F59E0B', letterSpacing: '0.5px' }}>
+                State-Wide Saturation (All 30 Revenue Districts Covered)
+              </span>
+              <span style={{ fontSize: '11px', color: '#94A3B8' }}>
+                1,048 Verified Target Colleges in Odisha
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {[
+                { name: 'Khordha (Bhubaneswar)', count: 142 },
+                { name: 'Cuttack', count: 98 },
+                { name: 'Sundargarh (Rourkela)', count: 76 },
+                { name: 'Ganjam (Berhampur)', count: 74 },
+                { name: 'Balasore', count: 62 },
+                { name: 'Mayurbhanj', count: 58 },
+                { name: 'Sambalpur', count: 52 },
+                { name: '+23 Other Districts', count: 486 },
+              ].map((d, i) => (
+                <div 
+                  key={i} 
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span style={{ color: '#E2E8F0', fontWeight: 500 }}>{d.name}</span>
+                  <span style={{ color: '#F59E0B', fontWeight: 700, fontFamily: 'monospace' }}>{d.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {(activeRole.id === 'HR / Outreach Lead' || activeRole.id === 'HR') && (
+          <div style={{ background: 'rgba(0, 0, 0, 0.4)', borderRadius: '8px', padding: '12px 16px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '8px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#10B981', letterSpacing: '0.5px' }}>
+                Outreach Pipeline Readiness
+              </span>
+              <span style={{ fontSize: '11px', color: '#94A3B8' }}>
+                Hierarchical Contact Routing Active
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
+              <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                <span style={{ fontSize: '10px', color: '#64748B', textTransform: 'uppercase' }}>Designation Target</span>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF' }}>Principal &amp; T&amp;P Placement Desks</div>
+              </div>
+              <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                <span style={{ fontSize: '10px', color: '#64748B', textTransform: 'uppercase' }}>Campaign Pacing</span>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF' }}>Safe 1.5s Google SMTP Delay</div>
+              </div>
+              <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                <span style={{ fontSize: '10px', color: '#64748B', textTransform: 'uppercase' }}>Personalization Tags</span>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF' }}>[College Name], [City], [Principal Name]</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeRole.id === 'Tech Lead' && (
+          <div style={{ background: 'rgba(0, 0, 0, 0.4)', borderRadius: '8px', padding: '12px 16px', border: '1px solid rgba(6, 182, 212, 0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '8px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#06B6D4', letterSpacing: '0.5px' }}>
+                System Infrastructure Telemetry
+              </span>
+              <span style={{ fontSize: '11px', color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981' }} />
+                Cluster Healthy
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
+              <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                <span style={{ fontSize: '10px', color: '#64748B', textTransform: 'uppercase' }}>SMTP Gateway</span>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF' }}>smtp.gmail.com:465 (TLS 1.3 Strict)</div>
+              </div>
+              <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                <span style={{ fontSize: '10px', color: '#64748B', textTransform: 'uppercase' }}>Security Layer</span>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF' }}>HMAC-SHA256 Visual CAPTCHA</div>
+              </div>
+              <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                <span style={{ fontSize: '10px', color: '#64748B', textTransform: 'uppercase' }}>Storage Engine</span>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF' }}>better-sqlite3 (WAL Mode + /tmp Lambda)</div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Metric Cards Grid */}
