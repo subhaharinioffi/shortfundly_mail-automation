@@ -294,18 +294,19 @@ export default function CollegesPage() {
             College Contact Details &amp; Directory
           </h1>
           <p style={{ fontSize: '14px', color: '#94A3B8', marginTop: '2px' }}>
-            Maintain verified official college emails, websites, departments, and source links.
+            Maintain verified official college emails, websites, departments, and leadership contacts.
           </p>
         </div>
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button 
-            onClick={() => { setShowInputPanel(!showInputPanel); setImportResult(null); }}
-            className={`btn btn-sm ${showInputPanel ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => { setShowInputPanel(true); setImportResult(null); }}
+            className="btn btn-secondary btn-sm"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            <Upload size={14} />
-            <span>{showInputPanel ? 'Hide Input Panel' : 'Upload Odisha Dataset'}</span>
+            <RefreshCw size={14} color="#38BDF8" />
+            <span>Sync &amp; Import Dataset</span>
           </button>
 
           <button 
@@ -343,153 +344,210 @@ export default function CollegesPage() {
         </div>
       )}
 
-      {/* ================= CLEAN & PROFESSIONAL LOADABLE UNSTRESS INPUT PANEL ================= */}
-      {(showInputPanel || total === 0) && (
-        <div className="card" style={{
-          border: '1px solid rgba(255, 50, 75, 0.3)',
-          background: 'linear-gradient(180deg, rgba(22, 29, 46, 0.95) 0%, rgba(13, 17, 27, 0.98) 100%)',
-          padding: '20px 24px',
-          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)',
-          position: 'relative'
-        }}>
-          {total > 0 && (
-            <button 
-              onClick={() => setShowInputPanel(false)}
-              style={{ position: 'absolute', right: '16px', top: '16px', background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
-              title="Collapse Panel"
-            >
-              <X size={16} />
-            </button>
-          )}
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-            <FileSpreadsheet size={20} color="#FF324B" />
-            <h2 style={{ fontSize: '17px', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
-              Odisha Colleges Dataset Input &amp; Sync Panel
-            </h2>
-            <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(56, 189, 248, 0.15)', color: '#38BDF8', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
-              Supports .xlsx &amp; .csv
-            </span>
-          </div>
-          <p style={{ fontSize: '13px', color: '#94A3B8', marginBottom: '16px' }}>
-            Upload your official Odisha Colleges spreadsheet (<code style={{ color: '#38BDF8' }}>Odisha_Colleges_Master_Unique_Directory.xlsx</code> or <code style={{ color: '#38BDF8' }}>Orissa_Colleges_Complete_Email_Directory.xlsx</code>). The engine automatically resolves standardized college names, verified leadership emails, websites, districts, and verification sources.
-          </p>
-
-          <form onSubmit={handleImportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            
-            {/* Drag & Drop File Zone */}
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              style={{
-                border: isDragging ? '2px dashed #FF324B' : '2px dashed rgba(255, 255, 255, 0.15)',
-                background: isDragging ? 'rgba(255, 50, 75, 0.08)' : 'rgba(7, 9, 14, 0.6)',
-                borderRadius: '10px',
-                padding: '24px 20px',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                position: 'relative'
-              }}
-              onClick={() => document.getElementById('college-file-input')?.click()}
-            >
-              <input
-                id="college-file-input"
-                type="file"
-                accept=".xlsx,.xls,.csv,.txt"
-                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                style={{ display: 'none' }}
-              />
-
-              {importFile ? (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10B981', fontWeight: 600 }}>
-                    <CheckCircle2 size={20} />
-                    <span>File Selected: {importFile.name}</span>
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#94A3B8' }}>
-                    Size: {(importFile.size / 1024).toFixed(1)} KB • Click or drop another file to change
-                  </div>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                  <Upload size={32} color="#64748B" />
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#E2E8F0' }}>
-                    Drag &amp; drop your Odisha Colleges XLSX or CSV file here, or <span style={{ color: '#FF324B', textDecoration: 'underline' }}>browse</span>
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#64748B' }}>
-                    Max recommended size: 25 MB • Zero server lag • Fast local parsing
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Recognized Data Fields Tag Strip */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', fontSize: '11px', color: '#94A3B8' }}>
-              <span style={{ fontWeight: 600, color: '#CBD5E1' }}>Recognized Inputs:</span>
-              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 6px', borderRadius: '4px' }}>✓ College Name (Standardized)</span>
-              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 6px', borderRadius: '4px' }}>✓ Official Emails (Combined)</span>
-              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 6px', borderRadius: '4px' }}>✓ District / Location</span>
-              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 6px', borderRadius: '4px' }}>✓ Official Website</span>
-              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 6px', borderRadius: '4px' }}>✓ Principal &amp; Contact Mobile</span>
-              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 6px', borderRadius: '4px' }}>✓ Category / Stream / Affiliation</span>
-              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 6px', borderRadius: '4px' }}>✓ Verification Source URL</span>
-            </div>
-
-            {/* Mode Selector and Submit Button */}
-            <div style={{
+      {/* ================= COMPACT RIGHT-SIDE SLIDE-OVER INPUT & SYNC DRAWER ================= */}
+      {showInputPanel && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1000,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(5px)',
+          }}
+          onClick={() => setShowInputPanel(false)}
+        >
+          <div 
+            style={{
+              width: '460px',
+              maxWidth: '92vw',
+              height: '100%',
+              background: '#0B0F19',
+              borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
+              boxShadow: '-16px 0 48px rgba(0, 0, 0, 0.85)',
+              padding: '24px 22px',
               display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '12px',
-              paddingTop: '10px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.06)'
-            }}>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', color: '#E2E8F0' }}>
-                  <input
-                    type="radio"
-                    name="inputMode"
-                    value="upsert"
-                    checked={importMode === 'upsert'}
-                    onChange={() => setImportMode('upsert')}
-                  />
-                  <span><strong>Sync &amp; Update</strong> (Safely add new colleges &amp; update contacts)</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', color: '#E2E8F0' }}>
-                  <input
-                    type="radio"
-                    name="inputMode"
-                    value="replace"
-                    checked={importMode === 'replace'}
-                    onChange={() => setImportMode('replace')}
-                  />
-                  <span><strong>Fresh Import</strong> (Replace all records with this file)</span>
-                </label>
+              flexDirection: 'column',
+              gap: '16px',
+              overflowY: 'auto'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(56, 189, 248, 0.12)', border: '1px solid rgba(56, 189, 248, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FileSpreadsheet size={18} color="#38BDF8" />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
+                    Dataset Sync &amp; Import
+                  </h2>
+                  <p style={{ fontSize: '11px', color: '#94A3B8', margin: '2px 0 0 0' }}>
+                    Odisha Institutional Registry Engine
+                  </p>
+                </div>
               </div>
+              <button 
+                onClick={() => setShowInputPanel(false)}
+                style={{ background: 'rgba(255, 255, 255, 0.05)', border: 'none', borderRadius: '6px', color: '#94A3B8', padding: '6px', cursor: 'pointer', display: 'flex' }}
+                title="Close"
+              >
+                <X size={16} />
+              </button>
+            </div>
 
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  type="submit"
-                  disabled={importing || !importFile}
-                  className="btn btn-primary"
-                  style={{ minWidth: '180px' }}
+            {/* Clear View Options for Sync & Update vs Fresh Import */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#CBD5E1', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Import Mode Selection
+              </span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div
+                  onClick={() => setImportMode('upsert')}
+                  style={{
+                    padding: '12px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    border: importMode === 'upsert' ? '1.5px solid #10B981' : '1px solid rgba(255, 255, 255, 0.08)',
+                    background: importMode === 'upsert' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    transition: 'all 0.15s ease'
+                  }}
                 >
-                  {importing ? (
-                    <>
-                      <RefreshCw size={14} className="animate-spin" />
-                      <span>Processing &amp; Loading...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload size={14} />
-                      <span>Load Dataset into Database</span>
-                    </>
-                  )}
-                </button>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: importMode === 'upsert' ? '#10B981' : '#FFFFFF', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <RefreshCw size={12} />
+                      Sync &amp; Update
+                    </span>
+                    <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '3px', background: 'rgba(16, 185, 129, 0.25)', color: '#10B981', fontWeight: 700 }}>
+                      SAFE
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '10px', color: '#94A3B8', lineHeight: 1.35 }}>
+                    Updates contacts &amp; appends new colleges without wiping existing data.
+                  </span>
+                </div>
+
+                <div
+                  onClick={() => setImportMode('replace')}
+                  style={{
+                    padding: '12px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    border: importMode === 'replace' ? '1.5px solid #F59E0B' : '1px solid rgba(255, 255, 255, 0.08)',
+                    background: importMode === 'replace' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: importMode === 'replace' ? '#F59E0B' : '#FFFFFF', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Upload size={12} />
+                      Fresh Import
+                    </span>
+                    <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '3px', background: 'rgba(245, 158, 11, 0.25)', color: '#F59E0B', fontWeight: 700 }}>
+                      REPLACE
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '10px', color: '#94A3B8', lineHeight: 1.35 }}>
+                    Clean slate: replaces current database records entirely with file data.
+                  </span>
+                </div>
               </div>
+            </div>
+          {/* Drag & Drop File Zone */}
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            style={{
+              border: isDragging ? '2px dashed #FF324B' : '2px dashed rgba(255, 255, 255, 0.15)',
+              background: isDragging ? 'rgba(255, 50, 75, 0.08)' : 'rgba(7, 9, 14, 0.6)',
+              borderRadius: '8px',
+              padding: '16px 14px',
+              textAlign: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+            onClick={() => document.getElementById('college-file-input')?.click()}
+          >
+            <input
+              id="college-file-input"
+              type="file"
+              accept=".xlsx,.xls,.csv,.txt"
+              onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+              style={{ display: 'none' }}
+            />
+
+            {importFile ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#10B981', fontWeight: 600, fontSize: '13px' }}>
+                  <CheckCircle2 size={16} />
+                  <span>{importFile.name}</span>
+                </div>
+                <div style={{ fontSize: '11px', color: '#94A3B8' }}>
+                  {(importFile.size / 1024).toFixed(1)} KB • Click to change file
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                <Upload size={24} color="#64748B" />
+                <div style={{ fontSize: '13px', fontWeight: 600, color: '#E2E8F0' }}>
+                  Drop XLSX or CSV here, or <span style={{ color: '#FF324B', textDecoration: 'underline' }}>browse</span>
+                </div>
+                <div style={{ fontSize: '10px', color: '#64748B' }}>
+                  Fast local parser • Max 25 MB
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Form and Action Buttons */}
+          <form onSubmit={handleImportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* Recognized Data Fields Tag Strip */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', fontSize: '10px', color: '#94A3B8' }}>
+              <span style={{ fontWeight: 600, color: '#CBD5E1' }}>Parsed Fields:</span>
+              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 5px', borderRadius: '3px' }}>✓ College Name</span>
+              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 5px', borderRadius: '3px' }}>✓ Official Emails</span>
+              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 5px', borderRadius: '3px' }}>✓ District / City</span>
+              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 5px', borderRadius: '3px' }}>✓ Website</span>
+              <span style={{ background: 'rgba(255, 255, 255, 0.04)', padding: '2px 5px', borderRadius: '3px' }}>✓ Leadership Contact</span>
+            </div>
+
+            {/* Submit Action Strip */}
+            <div style={{ display: 'flex', gap: '8px', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              <button
+                type="button"
+                onClick={() => setShowInputPanel(false)}
+                className="btn btn-secondary btn-sm"
+                style={{ flex: '1' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={importing || !importFile}
+                className="btn btn-primary btn-sm"
+                style={{ flex: '2', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+              >
+                {importing ? (
+                  <>
+                    <RefreshCw size={13} className="animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    {importMode === 'upsert' ? <RefreshCw size={13} /> : <Upload size={13} />}
+                    <span>{importMode === 'upsert' ? 'Run Sync & Update' : 'Run Fresh Import'}</span>
+                  </>
+                )}
+              </button>
             </div>
 
             {/* Result Summary Bar if Import Completed */}
@@ -498,30 +556,28 @@ export default function CollegesPage() {
                 background: 'rgba(16, 185, 129, 0.1)',
                 border: '1px solid rgba(16, 185, 129, 0.3)',
                 borderRadius: '8px',
-                padding: '12px 16px',
+                padding: '10px 14px',
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '10px'
+                flexDirection: 'column',
+                gap: '6px'
               }}>
-                <div style={{ fontSize: '12px', color: '#E2E8F0' }}>
-                  ✓ <strong>Dataset Load Complete:</strong> Saved <strong>{importResult.stats.totalProcessed ?? importResult.stats.inserted}</strong> verified colleges ({importResult.stats.inserted} new added, {importResult.stats.updated || 0} updated, {importResult.stats.skippedDuplicates || 0} duplicate emails filtered).
+                <div style={{ fontSize: '11px', color: '#E2E8F0', lineHeight: 1.4 }}>
+                  ✓ <strong>Completed:</strong> Saved {importResult.stats.totalProcessed ?? importResult.stats.inserted} colleges ({importResult.stats.inserted} new added, {importResult.stats.updated || 0} updated, {importResult.stats.skippedDuplicates || 0} duplicates skipped).
                 </div>
                 <button
                   type="button"
-                  onClick={() => { setImportResult(null); setImportFile(null); }}
+                  onClick={() => { setImportResult(null); setImportFile(null); setShowInputPanel(false); }}
                   className="btn btn-secondary btn-sm"
-                  style={{ fontSize: '11px', padding: '3px 8px' }}
+                  style={{ fontSize: '10px', padding: '3px 8px', alignSelf: 'flex-start' }}
                 >
-                  Dismiss
+                  Close Drawer
                 </button>
               </div>
             )}
-
           </form>
         </div>
-      )}
+      </div>
+    )}
 
       {/* Stats Summary Bar */}
       <div style={{ 
@@ -762,7 +818,6 @@ export default function CollegesPage() {
               <th>Official Website</th>
               <th>Department / Contact</th>
               <th>Official Email Address</th>
-              <th>Source URL</th>
               <th>Outreach Status</th>
               <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
@@ -770,14 +825,14 @@ export default function CollegesPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '48px 20px', color: '#94A3B8' }}>
+                <td colSpan={6} style={{ textAlign: 'center', padding: '48px 20px', color: '#94A3B8' }}>
                   <RefreshCw size={24} className="animate-spin" style={{ color: '#FF324B', margin: '0 auto 12px' }} />
                   <div>Loading Odisha Colleges Database...</div>
                 </td>
               </tr>
             ) : colleges.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '52px 20px', color: '#94A3B8' }}>
+                <td colSpan={6} style={{ textAlign: 'center', padding: '52px 20px', color: '#94A3B8' }}>
                   {total === 0 ? (
                     <div>
                       <GraduationCap size={40} style={{ color: '#64748B', margin: '0 auto 12px' }} />
@@ -837,21 +892,6 @@ export default function CollegesPage() {
                     <div style={{ fontFamily: 'monospace', color: '#FF6B7E', fontWeight: 600 }}>
                       {col.email}
                     </div>
-                  </td>
-                  <td>
-                    {col.source_page_url ? (
-                      <a 
-                        href={col.source_page_url} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        style={{ color: '#94A3B8', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', fontSize: '12px' }}
-                      >
-                        <span>Official Source</span>
-                        <ExternalLink size={11} />
-                      </a>
-                    ) : (
-                      <span style={{ color: '#64748B', fontSize: '12px' }}>Verified</span>
-                    )}
                   </td>
                   <td>
                     <span className={`status-pill ${col.status}`}>

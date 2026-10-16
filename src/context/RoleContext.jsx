@@ -27,7 +27,7 @@ export const ROLES = {
   HR: {
     id: 'HR / Outreach Lead',
     title: 'HR / Outreach Lead',
-    shortTitle: 'HR Lead',
+    shortTitle: 'HR',
     viewName: 'Campaign View',
     badgeClass: 'hr',
     color: '#10B981',

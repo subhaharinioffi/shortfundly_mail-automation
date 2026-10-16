@@ -4,7 +4,6 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CinemaBackground from '@/components/CinemaBackground';
 import ProductionSecurityGuard from '@/components/ProductionSecurityGuard';
-import RoleBanner from '@/components/RoleBanner';
 
 export const metadata = {
   title: "Shortfundly - Odisha Campus Outreach",
@@ -24,7 +23,6 @@ export default function RootLayout({ children }) {
             <CinemaBackground />
             <Navbar />
             <main className="main-content">
-              <RoleBanner />
               {children}
             </main>
             <Footer />
