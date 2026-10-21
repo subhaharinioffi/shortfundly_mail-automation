@@ -18,7 +18,13 @@ import {
   RefreshCw, 
   Send,
   Layers,
-  X
+  X,
+  Image as ImageIcon,
+  Link2,
+  MousePointerClick,
+  FileCheck,
+  Check,
+  ExternalLink
 } from 'lucide-react';
 import { FilmstripIcon, ClapperboardIcon } from '@/components/Icons';
 
@@ -39,7 +45,17 @@ export default function TemplatesPage() {
   const [category, setCategory] = useState('Campus Outreach');
   const [isDefault, setIsDefault] = useState(false);
 
+  // Media Insertion Modal State
+  const [activeModal, setActiveModal] = useState(null); // 'image' | 'link' | 'button' | null
+  const [modalImgUrl, setModalImgUrl] = useState('');
+  const [modalImgAlt, setModalImgAlt] = useState('');
+  const [modalLinkText, setModalLinkText] = useState('');
+  const [modalLinkUrl, setModalLinkUrl] = useState('');
+  const [modalBtnText, setModalBtnText] = useState('');
+  const [modalBtnUrl, setModalBtnUrl] = useState('');
+
   // Preview state
+  const [previewTab, setPreviewTab] = useState('rich'); // 'rich' | 'plain'
   const [liveColleges, setLiveColleges] = useState([]);
   const [activeCollege, setActiveCollege] = useState({
     college_name: 'Utkal University',
@@ -58,6 +74,26 @@ export default function TemplatesPage() {
     { label: '[Official Website]', token: '[Official Website]' },
     { label: '[Your Name]', token: '[Your Name]' },
     { label: '[Your Role]', token: '[Your Role]' },
+  ];
+
+  // Quick Preset Sources & Media
+  const imagePresets = [
+    { label: '🎬 Shortfundly Logo', url: 'https://campus.shortfundly.com/images/shortfundly-logo.png', alt: 'Shortfundly Campus' },
+    { label: '🎓 Campus Fest Banner', url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop&q=80', alt: 'Campus Film Festival Collaboration' },
+    { label: '🎥 Workshop Poster', url: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&auto=format&fit=crop&q=80', alt: 'Creative Filmmaking & AI Workshop' },
+  ];
+
+  const linkPresets = [
+    { label: '📄 Campus Pitch Deck (PDF)', url: 'https://campus.shortfundly.com/docs/Shortfundly-Campus-Deck.pdf', text: 'Download Shortfundly Campus Pitch Deck (PDF)' },
+    { label: '🌐 Shortfundly Portal', url: 'https://campus.shortfundly.com', text: 'Visit Shortfundly Campus Portal' },
+    { label: '📜 Official MoU Draft', url: 'https://campus.shortfundly.com/mou-template', text: 'Review Institutional MoU Draft' },
+    { label: '🏛️ Odisha DHE Reference', url: 'https://dhe.odisha.gov.in', text: 'Department of Higher Education Odisha' },
+  ];
+
+  const buttonPresets = [
+    { label: '📅 Schedule Meeting', url: 'https://calendly.com/shortfundly-meeting/30min', text: 'Schedule 30-Min Campus Presentation' },
+    { label: '🚀 Explore Campus Pass', url: 'https://campus.shortfundly.com/', text: 'Explore Shortfundly Campus Pass' },
+    { label: '🤝 Confirm Interest', url: 'https://campus.shortfundly.com/partner', text: 'Confirm Partnership & Schedule Demo' },
   ];
 
   const fetchTemplates = async () => {
@@ -109,9 +145,40 @@ export default function TemplatesPage() {
     }
   }, [status]);
 
-  // Insert token into textarea at cursor
+  // Insert token into textarea at cursor or end
   const insertToken = (token) => {
     setBody((prev) => prev + ' ' + token);
+  };
+
+  // Insert media/source snippets
+  const handleInsertImage = (url, alt) => {
+    if (!url) return;
+    const cleanAlt = alt || 'Shortfundly Visual';
+    setBody((prev) => prev + `\n\n![${cleanAlt}](${url})\n\n`);
+    setActiveModal(null);
+    setModalImgUrl('');
+    setModalImgAlt('');
+    setAlert({ type: 'success', message: 'Image inserted into proposal body.' });
+  };
+
+  const handleInsertLink = (text, url) => {
+    if (!url) return;
+    const cleanText = text || 'Resource Link';
+    setBody((prev) => prev + ` [${cleanText}](${url}) `);
+    setActiveModal(null);
+    setModalLinkText('');
+    setModalLinkUrl('');
+    setAlert({ type: 'success', message: 'Resource link inserted into proposal body.' });
+  };
+
+  const handleInsertButton = (text, url) => {
+    if (!url) return;
+    const cleanText = text || 'Explore Opportunity';
+    setBody((prev) => prev + `\n\n[button:${cleanText}](${url})\n\n`);
+    setActiveModal(null);
+    setModalBtnText('');
+    setModalBtnUrl('');
+    setAlert({ type: 'success', message: 'Action CTA button inserted into proposal body.' });
   };
 
   // Save changes to current template or create new
@@ -161,7 +228,7 @@ export default function TemplatesPage() {
     setSelectedTemplateId(null);
     setName('New Odisha Outreach Proposal');
     setSubject('PROPOSAL FOR SHORTFUNDLY CAMPUS COLLABORATION - [College Name]');
-    setBody('Dear Sir/Madam,\n\nGreetings from Shortfundly!\n\nWe propose a collaboration with [College Name] through Shortfundly Campus...\n\nWarm regards,\n[Your Name]\n[Your Role]');
+    setBody('Dear Sir/Madam,\n\nGreetings from Shortfundly!\n\nWe propose a collaboration with [College Name] through Shortfundly Campus to empower student filmmakers and digital creators.\n\n![Shortfundly Campus](https://campus.shortfundly.com/images/shortfundly-logo.png)\n\n[button:Schedule Campus Demo](https://calendly.com/shortfundly-meeting/30min)\n\nWarm regards,\n[Your Name]\n[Your Role]');
     setCategory('Campus Outreach');
     setIsDefault(false);
     setAlert({ type: 'info', message: 'Drafting new template. Click "Save Template" when ready.' });
@@ -204,6 +271,53 @@ export default function TemplatesPage() {
   const renderedSubject = getRenderedContent(subject);
   const renderedBody = getRenderedContent(body);
 
+  // Safe live HTML renderer for preview pane
+  const renderLiveHtml = (rawText) => {
+    if (!rawText) return '';
+    let safe = rawText
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    // 1. Markdown Images
+    safe = safe.replace(/!\[([^\]]*)\]\(((?:https?:\/\/|data:image\/)[^)]+)\)/gi, (m, alt, url) => {
+      return `<div style="margin: 16px 0; text-align: center;"><img src="${url}" alt="${alt || 'Image'}" style="max-width: 100%; max-height: 240px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 4px 14px rgba(0,0,0,0.3); display: inline-block; object-fit: contain;" /></div>`;
+    });
+
+    // 2. Action Buttons
+    safe = safe.replace(/\[(?:button|cta):([^\]]+)\]\((https?:\/\/[^)]+)\)/gi, (m, label, url) => {
+      return `<div style="margin: 18px 0; text-align: center;"><a href="${url}" target="_blank" rel="noopener noreferrer" style="background: linear-gradient(135deg, #FF324B, #E0283E); color: #FFFFFF !important; padding: 11px 24px; text-decoration: none; border-radius: 6px; font-weight: 700; display: inline-block; box-shadow: 0 4px 14px rgba(255,50,75,0.3); font-size: 13px; letter-spacing: 0.02em;">${label}</a></div>`;
+    });
+
+    // 3. Links
+    safe = safe.replace(/\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^)]+)\)/gi, (m, label, url) => {
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #FF6B7E; text-decoration: underline; font-weight: 600;">${label}</a>`;
+    });
+
+    // 4. Bold
+    safe = safe.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    safe = safe.replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
+
+    // 5. Paragraphs and lists
+    const blocks = safe.split(/\n\s*\n/).map(block => {
+      const trimmed = block.trim();
+      if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+        const lis = trimmed.split(/\n/).map(l => `<li style="margin-bottom: 4px;">${l.replace(/^[-*]\s*/, '')}</li>`).join('');
+        return `<ul style="margin: 10px 0 14px 20px; line-height: 1.6; color: #CBD5E1;">${lis}</ul>`;
+      }
+      if (/^\d+\.\s/.test(trimmed)) {
+        const lis = trimmed.split(/\n/).map(l => `<li style="margin-bottom: 4px;">${l.replace(/^\d+\.\s*/, '')}</li>`).join('');
+        return `<ol style="margin: 10px 0 14px 20px; line-height: 1.6; color: #CBD5E1;">${lis}</ol>`;
+      }
+      if (trimmed.startsWith('<div style="margin:') && trimmed.endsWith('</div>')) {
+        return trimmed;
+      }
+      return `<p style="margin: 0 0 12px 0; line-height: 1.65; color: #CBD5E1;">${trimmed.replace(/\n/g, '<br/>')}</p>`;
+    });
+
+    return blocks.join('');
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
       
@@ -212,13 +326,13 @@ export default function TemplatesPage() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <span className="role-badge admin">TEMPLATE STUDIO</span>
-            <span style={{ fontSize: '12px', color: '#64748B' }}>Editable Templates • Dynamic Personalization</span>
+            <span style={{ fontSize: '12px', color: '#64748B' }}>Editable Templates • Media &amp; Source Tools • Live Preview</span>
           </div>
           <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#FFFFFF' }}>
             Proposal Email Templates
           </h1>
           <p style={{ fontSize: '14px', color: '#94A3B8', marginTop: '2px' }}>
-            Upload, customize, and preview personalized outreach proposals for Odisha institutions.
+            Upload, customize, add visual media and sources, and preview personalized outreach proposals.
           </p>
         </div>
 
@@ -249,7 +363,7 @@ export default function TemplatesPage() {
       )}
 
       {/* Main Split Grid: Editor (Left) & Live Preview (Right) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(400px, 1.1fr) minmax(380px, 1fr)', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(420px, 1.15fr) minmax(380px, 1fr)', gap: '24px' }}>
         
         {/* LEFT COLUMN: TEMPLATE EDITOR */}
         <div className="card">
@@ -325,6 +439,237 @@ export default function TemplatesPage() {
                 className="form-input"
                 placeholder="PROPOSAL FOR SHORTFUNDLY CAMPUS COLLABORATION - [College Name]"
               />
+            </div>
+
+            {/* MEDIA & SOURCE TOOLS BAR */}
+            <div style={{ 
+              background: 'linear-gradient(180deg, rgba(31, 73, 125, 0.12) 0%, rgba(15, 23, 42, 0.3) 100%)', 
+              border: '1px solid rgba(56, 189, 248, 0.2)', 
+              borderRadius: '8px', 
+              padding: '12px', 
+              marginBottom: '14px' 
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#38BDF8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Add Media, Sources &amp; Interactive Buttons:
+                </span>
+                <span style={{ fontSize: '11px', color: '#64748B' }}>
+                  Rich multi-format support
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(activeModal === 'image' ? null : 'image')}
+                  className="btn btn-secondary btn-sm"
+                  style={{
+                    fontSize: '11px',
+                    padding: '5px 10px',
+                    background: activeModal === 'image' ? 'rgba(255, 50, 75, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    borderColor: activeModal === 'image' ? '#FF324B' : 'rgba(255, 255, 255, 0.1)'
+                  }}
+                >
+                  <ImageIcon size={13} color="#FF6B7E" />
+                  <span>+ Add Image</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(activeModal === 'link' ? null : 'link')}
+                  className="btn btn-secondary btn-sm"
+                  style={{
+                    fontSize: '11px',
+                    padding: '5px 10px',
+                    background: activeModal === 'link' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    borderColor: activeModal === 'link' ? '#38BDF8' : 'rgba(255, 255, 255, 0.1)'
+                  }}
+                >
+                  <Link2 size={13} color="#38BDF8" />
+                  <span>+ Add Document / Link</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(activeModal === 'button' ? null : 'button')}
+                  className="btn btn-secondary btn-sm"
+                  style={{
+                    fontSize: '11px',
+                    padding: '5px 10px',
+                    background: activeModal === 'button' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    borderColor: activeModal === 'button' ? '#10B981' : 'rgba(255, 255, 255, 0.1)'
+                  }}
+                >
+                  <MousePointerClick size={13} color="#10B981" />
+                  <span>+ Add Action Button (CTA)</span>
+                </button>
+              </div>
+
+              {/* MODAL 1: ADD IMAGE DRAWER */}
+              {activeModal === 'image' && (
+                <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(7, 9, 14, 0.85)', borderRadius: '6px', border: '1px solid rgba(255, 50, 75, 0.3)' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Insert Image into Proposal</span>
+                    <button type="button" onClick={() => setActiveModal(null)} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}><X size={12} /></button>
+                  </div>
+                  
+                  {/* Preset Quick Chips */}
+                  <div style={{ marginBottom: '10px' }}>
+                    <div style={{ fontSize: '10px', color: '#94A3B8', marginBottom: '4px' }}>Quick Presets:</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                      {imagePresets.map((p, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => { setModalImgUrl(p.url); setModalImgAlt(p.alt); }}
+                          style={{ fontSize: '10px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#CBD5E1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                    <input
+                      type="text"
+                      placeholder="Image URL (https://... or data:image/...)"
+                      value={modalImgUrl}
+                      onChange={(e) => setModalImgUrl(e.target.value)}
+                      className="form-input"
+                      style={{ fontSize: '11px', height: '32px' }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Alt Text / Caption"
+                      value={modalImgAlt}
+                      onChange={(e) => setModalImgAlt(e.target.value)}
+                      className="form-input"
+                      style={{ fontSize: '11px', height: '32px' }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleInsertImage(modalImgUrl, modalImgAlt)}
+                    disabled={!modalImgUrl}
+                    className="btn btn-primary btn-sm"
+                    style={{ fontSize: '11px', padding: '4px 12px' }}
+                  >
+                    Insert Image
+                  </button>
+                </div>
+              )}
+
+              {/* MODAL 2: ADD LINK / DOCUMENT DRAWER */}
+              {activeModal === 'link' && (
+                <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(7, 9, 14, 0.85)', borderRadius: '6px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Insert Document, Source, or Website Link</span>
+                    <button type="button" onClick={() => setActiveModal(null)} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}><X size={12} /></button>
+                  </div>
+                  
+                  {/* Preset Quick Chips */}
+                  <div style={{ marginBottom: '10px' }}>
+                    <div style={{ fontSize: '10px', color: '#94A3B8', marginBottom: '4px' }}>Quick Source Presets:</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                      {linkPresets.map((p, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => { setModalLinkText(p.text); setModalLinkUrl(p.url); }}
+                          style={{ fontSize: '10px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#CBD5E1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr', gap: '8px', marginBottom: '8px' }}>
+                    <input
+                      type="text"
+                      placeholder="Link Text (e.g. Download Pitch Deck)"
+                      value={modalLinkText}
+                      onChange={(e) => setModalLinkText(e.target.value)}
+                      className="form-input"
+                      style={{ fontSize: '11px', height: '32px' }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Target URL (https://...)"
+                      value={modalLinkUrl}
+                      onChange={(e) => setModalLinkUrl(e.target.value)}
+                      className="form-input"
+                      style={{ fontSize: '11px', height: '32px' }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleInsertLink(modalLinkText, modalLinkUrl)}
+                    disabled={!modalLinkUrl}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '11px', padding: '4px 12px' }}
+                  >
+                    Insert Link
+                  </button>
+                </div>
+              )}
+
+              {/* MODAL 3: ADD ACTION BUTTON DRAWER */}
+              {activeModal === 'button' && (
+                <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(7, 9, 14, 0.85)', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Insert Branded Call-To-Action (CTA) Button</span>
+                    <button type="button" onClick={() => setActiveModal(null)} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}><X size={12} /></button>
+                  </div>
+                  
+                  {/* Preset Quick Chips */}
+                  <div style={{ marginBottom: '10px' }}>
+                    <div style={{ fontSize: '10px', color: '#94A3B8', marginBottom: '4px' }}>Quick Button Presets:</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                      {buttonPresets.map((p, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => { setModalBtnText(p.text); setModalBtnUrl(p.url); }}
+                          style={{ fontSize: '10px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#CBD5E1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr', gap: '8px', marginBottom: '8px' }}>
+                    <input
+                      type="text"
+                      placeholder="Button Text (e.g. Schedule Meeting)"
+                      value={modalBtnText}
+                      onChange={(e) => setModalBtnText(e.target.value)}
+                      className="form-input"
+                      style={{ fontSize: '11px', height: '32px' }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Destination URL (https://...)"
+                      value={modalBtnUrl}
+                      onChange={(e) => setModalBtnUrl(e.target.value)}
+                      className="form-input"
+                      style={{ fontSize: '11px', height: '32px' }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleInsertButton(modalBtnText, modalBtnUrl)}
+                    disabled={!modalBtnUrl}
+                    className="btn btn-primary btn-sm"
+                    style={{ fontSize: '11px', padding: '4px 12px' }}
+                  >
+                    Insert CTA Button
+                  </button>
+                </div>
+              )}
+
             </div>
 
             {/* Token Inserters */}
@@ -407,10 +752,41 @@ export default function TemplatesPage() {
               </div>
             </div>
 
-            {/* Pure Plain Text Format Badge */}
-            <span style={{ fontSize: '11px', color: '#10B981', fontWeight: 600, padding: '4px 10px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '6px' }}>
-              Pure Plain-Text Delivery
-            </span>
+            {/* View Mode Toggle: Rich vs Plain */}
+            <div style={{ display: 'flex', gap: '4px', background: 'rgba(255, 255, 255, 0.05)', padding: '2px', borderRadius: '6px' }}>
+              <button
+                type="button"
+                onClick={() => setPreviewTab('rich')}
+                style={{
+                  background: previewTab === 'rich' ? '#FF324B' : 'transparent',
+                  color: previewTab === 'rich' ? '#FFFFFF' : '#94A3B8',
+                  border: 'none',
+                  padding: '3px 9px',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Rich Email View
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewTab('plain')}
+                style={{
+                  background: previewTab === 'plain' ? '#FF324B' : 'transparent',
+                  color: previewTab === 'plain' ? '#FFFFFF' : '#94A3B8',
+                  border: 'none',
+                  padding: '3px 9px',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Plain Text
+              </button>
+            </div>
           </div>
 
           {/* Database College Context Selector */}
@@ -450,12 +826,33 @@ export default function TemplatesPage() {
             </div>
           </div>
 
-          {/* Pure Plain Text Body Preview Area */}
+          {/* Body Preview Area */}
           <div style={{ flex: 1, minHeight: '440px', overflowY: 'auto', background: '#0B0D13', borderRadius: '8px', border: '1px solid var(--border-subtle)', padding: '20px' }}>
-            <pre style={{ color: '#E2E8F0', fontSize: '13px', lineHeight: '1.65', whiteSpace: 'pre-wrap', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace', margin: 0 }}>
-              {renderedBody}
-              {'\n\n--\nShortfundly Campus Team\nShortfundly OTT Marketplace • Creative Partnerships\nOfficial Portal: https://campus.shortfundly.com | Inquiries: +91 93612 23155\nTo unsubscribe, reply with \'Unsubscribe\'.'}
-            </pre>
+            {previewTab === 'rich' ? (
+              <div style={{ maxWidth: '580px', margin: '0 auto' }}>
+                <div 
+                  dangerouslySetInnerHTML={{ __html: renderLiveHtml(renderedBody) }} 
+                  style={{ fontSize: '13px', lineHeight: '1.65' }}
+                />
+
+                {/* Professional Shortfundly Verified Footer */}
+                <div style={{ marginTop: '28px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)', fontSize: '12px', color: '#94A3B8', lineHeight: 1.6 }}>
+                  <div style={{ fontWeight: 700, color: '#FFFFFF' }}>Shortfundly Campus Team</div>
+                  <div>Shortfundly OTT Marketplace • Creative Partnerships Initiative</div>
+                  <div style={{ marginTop: '4px' }}>
+                    Official Portal: <a href="https://campus.shortfundly.com" target="_blank" rel="noopener noreferrer" style={{ color: '#FF6B7E', textDecoration: 'underline' }}>campus.shortfundly.com</a> | Inquiries: +91 93612 23155
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#64748B', marginTop: '8px' }}>
+                    You are receiving this official correspondence regarding student development in Odisha. To unsubscribe, reply with &quot;Unsubscribe&quot;.
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <pre style={{ color: '#E2E8F0', fontSize: '13px', lineHeight: '1.65', whiteSpace: 'pre-wrap', fontFamily: 'monospace', margin: 0 }}>
+                {renderedBody}
+                {'\n\n--\nShortfundly Campus Team\nShortfundly OTT Marketplace • Creative Partnerships\nOfficial Portal: https://campus.shortfundly.com | Inquiries: +91 93612 23155\nTo unsubscribe, reply with \'Unsubscribe\'.'}
+              </pre>
+            )}
           </div>
 
         </div>

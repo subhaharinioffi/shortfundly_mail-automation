@@ -267,11 +267,11 @@ export default function CampaignsPage() {
     setSelectedIds(new Set(newItems.map(c => c.id)));
   };
 
-  // Launch Automated Dispatch
+  // Launch Automated Email Outreach
   const handleLaunchCampaign = async () => {
     const targetColleges = colleges.filter(c => selectedIds.has(c.id));
     if (targetColleges.length === 0) {
-      setAlert({ type: 'danger', message: 'Please select at least one college recipient from the batch.' });
+      setAlert({ type: 'danger', message: 'Please select at least one college from the list.' });
       return;
     }
 
@@ -280,12 +280,12 @@ export default function CampaignsPage() {
       return;
     }
 
-    const confirmMsg = `CONFIRM BATCH DISPATCH:\n\n` +
-      `• Target Recipients: ${targetColleges.length} institutions\n` +
-      `• Active Batch: Batch #${activeBatchIndex + 1}\n` +
-      `• Inter-Email Pacing: ${throttleDelaySec}s delay (Google SMTP Safe)\n` +
-      `• Duplicate Shield: ${bypassDuplicateCheck ? 'DISABLED' : 'ENABLED (Active)'}\n\n` +
-      `Proceed with automated outreach?`;
+    const confirmMsg = `CONFIRM EMAIL OUTREACH:\n\n` +
+      `• Target Colleges: ${targetColleges.length} institutions\n` +
+      `• Active Group: Batch #${activeBatchIndex + 1}\n` +
+      `• Delay Between Emails: ${throttleDelaySec}s pause (Anti-Spam Safe)\n` +
+      `• Duplicate Protection: ${bypassDuplicateCheck ? 'OFF (Will Resend)' : 'ON (Prevents Duplicates)'}\n\n` +
+      `Send emails now?`;
 
     if (!window.confirm(confirmMsg)) return;
 
@@ -367,7 +367,7 @@ export default function CampaignsPage() {
     }
 
     setProgressPercent(100);
-    setCurrentProgressText(`Batch completed! ${sentCount} sent, ${skippedCount} duplicate-shielded, ${failedCount} failed.`);
+    setCurrentProgressText(`Sending complete! ${sentCount} successfully sent, ${skippedCount} duplicate skipped, ${failedCount} failed.`);
     setIsSending(false);
 
     // Refresh database colleges state
@@ -388,15 +388,15 @@ export default function CampaignsPage() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <span className="role-badge admin" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Zap size={11} /> Auto Batch Engine
+              <Zap size={11} /> Automated Email Outreach
             </span>
-            <span style={{ fontSize: '12px', color: '#94A3B8' }}>Google Workspace SMTP • High Deliverability • Zero Lag</span>
+            <span style={{ fontSize: '12px', color: '#94A3B8' }}>Google Workspace SMTP • High Deliverability • Rate Controlled</span>
           </div>
           <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.5px' }}>
-            Automated Outreach Campaign Studio
+            Automated Email Campaigns
           </h1>
           <p style={{ fontSize: '13px', color: '#94A3B8', marginTop: '3px' }}>
-            Smart Auto-Batching engine configured for <strong>{colleges.length} verified Odisha college records</strong>.
+            Personalized outreach organized into safe, manageable batches across <strong>{colleges.length} verified Odisha colleges</strong>.
           </p>
         </div>
 
@@ -426,8 +426,7 @@ export default function CampaignsPage() {
         </div>
       )}
 
-      {/* Top Telemetry Metric Ribbon (Unstressful Overview) */}
-      {/* Top Telemetry Metric Ribbon (Clean Overview) */}
+      {/* Summary Metric Ribbon */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
@@ -438,35 +437,35 @@ export default function CampaignsPage() {
         border: '1px solid var(--border-subtle)'
       }}>
         <div>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Filtered Recipients</span>
+          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Target Colleges</span>
           <div style={{ fontSize: '22px', fontWeight: 800, color: '#FFFFFF', marginTop: '2px' }}>
             {filteredColleges.length} <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>of {colleges.length}</span>
           </div>
         </div>
 
         <div>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Available Batches</span>
+          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Batches</span>
           <div style={{ fontSize: '22px', fontWeight: 800, color: '#38BDF8', marginTop: '2px' }}>
             {batches.length} <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>({batchSize} per batch)</span>
           </div>
         </div>
 
         <div>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Current Batch</span>
+          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active Batch</span>
           <div style={{ fontSize: '22px', fontWeight: 800, color: '#F59E0B', marginTop: '2px' }}>
-            Batch #{batches.length > 0 ? activeBatchIndex + 1 : 0} <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>({activeBatch.count} leads)</span>
+            Batch #{batches.length > 0 ? activeBatchIndex + 1 : 0} <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>({activeBatch.count} colleges)</span>
           </div>
         </div>
 
         <div>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Selected for Outreach</span>
+          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ready to Send</span>
           <div style={{ fontSize: '22px', fontWeight: 800, color: '#FF324B', marginTop: '2px' }}>
-            {selectedIds.size} <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>recipients</span>
+            {selectedIds.size} <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>colleges selected</span>
           </div>
         </div>
 
         <div>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Est. Delivery Time</span>
+          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Estimated Send Time</span>
           <div style={{ fontSize: '22px', fontWeight: 800, color: '#10B981', marginTop: '2px' }}>
             ~{estFormatted}
           </div>
@@ -476,14 +475,14 @@ export default function CampaignsPage() {
       {/* Main Studio 2-Column Split */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 0.75fr', gap: '22px' }}>
         
-        {/* ================= COLUMN 1: RECIPIENT BATCH STUDIO ================= */}
+        {/* ================= COLUMN 1: RECIPIENT & BATCH SELECTION ================= */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '18px 20px' }}>
           
           {/* Section Heading */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Layers size={18} color="#FF324B" />
-              <span style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF' }}>Recipient &amp; Batch Selection</span>
+              <span style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF' }}>Select Colleges &amp; Batches</span>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -495,7 +494,7 @@ export default function CampaignsPage() {
                 style={{ fontSize: '11px', padding: '4px 10px' }}
               >
                 <CheckSquare size={12} color="#FF324B" />
-                <span>Select All ({filteredColleges.length})</span>
+                <span>Select All Filtered ({filteredColleges.length})</span>
               </button>
               <button
                 type="button"
@@ -505,7 +504,7 @@ export default function CampaignsPage() {
                 style={{ fontSize: '11px', padding: '4px 10px' }}
               >
                 <Square size={12} />
-                <span>Clear</span>
+                <span>Deselect All</span>
               </button>
             </div>
           </div>
@@ -524,7 +523,7 @@ export default function CampaignsPage() {
             <div style={{ position: 'relative' }}>
               <input
                 type="text"
-                placeholder="Search college, email, person..."
+                placeholder="Search college name, district, email..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setActiveBatchIndex(0); }}
                 className="form-input"
@@ -561,11 +560,11 @@ export default function CampaignsPage() {
               className="form-select"
               style={{ fontSize: '12px', height: '34px' }}
             >
-              <option value="all">All Target Roles</option>
-              <option value="principal">👑 Principals &amp; Deans (Leadership)</option>
-              <option value="hod">🎓 HODs (Head of Dept)</option>
-              <option value="faculty">🔬 Faculty &amp; Staff</option>
-              <option value="admin">🏢 Administration / General</option>
+              <option value="all">Filter by Contact Role</option>
+              <option value="principal">👑 Principals &amp; Deans</option>
+              <option value="hod">🎓 Department Heads (HODs)</option>
+              <option value="faculty">🔬 Professors &amp; Faculty</option>
+              <option value="admin">🏢 College Office &amp; Administration</option>
             </select>
 
             {/* Status Filter */}
@@ -575,9 +574,9 @@ export default function CampaignsPage() {
               className="form-select"
               style={{ fontSize: '12px', height: '34px' }}
             >
-              <option value="uncontacted">Uncontacted Only (Safe)</option>
+              <option value="uncontacted">Not Yet Emailed (New)</option>
               <option value="sent">Already Contacted</option>
-              <option value="failed">Failed Only</option>
+              <option value="failed">Failed Delivery</option>
               <option value="all">All Outreach Status</option>
             </select>
           </div>
@@ -596,10 +595,10 @@ export default function CampaignsPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Sparkles size={15} color="#38BDF8" />
                 <span style={{ fontSize: '12px', fontWeight: 700, color: '#38BDF8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Smart Batch Splitter
+                  Batch Size &amp; Groups
                 </span>
                 <span style={{ fontSize: '11px', color: '#94A3B8' }}>
-                  ({filteredColleges.length} matching leads split into {batches.length} batches)
+                  ({filteredColleges.length} colleges split into {batches.length} groups of {batchSize})
                 </span>
               </div>
 
@@ -672,7 +671,7 @@ export default function CampaignsPage() {
                       ) : null}
                     </div>
                     <div style={{ fontSize: '10px', color: '#64748B', marginTop: '2px' }}>
-                      Leads {b.startIndex}–{b.endIndex} ({b.count})
+                      Colleges {b.startIndex}–{b.endIndex} ({b.count})
                     </div>
                   </button>
                 );
@@ -717,7 +716,7 @@ export default function CampaignsPage() {
                   className="btn btn-primary btn-sm"
                   style={{ padding: '3px 10px', fontSize: '11px' }}
                 >
-                  ⚡ Select Batch #{batches.length > 0 ? activeBatchIndex + 1 : 1} ({activeBatch.count} leads)
+                  Select Batch #{batches.length > 0 ? activeBatchIndex + 1 : 1} ({activeBatch.count} colleges)
                 </button>
                 <button
                   type="button"
@@ -725,7 +724,7 @@ export default function CampaignsPage() {
                   className="btn btn-secondary btn-sm"
                   style={{ padding: '3px 10px', fontSize: '11px' }}
                 >
-                  + Add Batch
+                  + Add to Selection
                 </button>
               </div>
             </div>
@@ -748,7 +747,7 @@ export default function CampaignsPage() {
                   fontSize: '11px'
                 }}
               >
-                Current Batch ({activeBatch.count})
+                Active Batch ({activeBatch.count})
               </button>
               <button
                 type="button"
@@ -780,7 +779,7 @@ export default function CampaignsPage() {
                   fontSize: '11px'
                 }}
               >
-                All Filtered ({filteredColleges.length})
+                All Matching ({filteredColleges.length})
               </button>
             </div>
 
@@ -941,17 +940,17 @@ export default function CampaignsPage() {
 
         </div>
 
-        {/* ================= COLUMN 2: DISPATCH CONSOLE & SAFEGUARDS ================= */}
+        {/* ================= COLUMN 2: EMAIL SETTINGS & SEND ================= */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '18px 20px' }}>
           
           <div className="card-header" style={{ marginBottom: '4px', paddingBottom: '10px', borderBottom: '1px solid var(--border-subtle)' }}>
             <div>
               <div className="card-title" style={{ fontSize: '16px' }}>
                 <Sliders size={18} color="#FF324B" />
-                <span>Campaign Settings &amp; Launch</span>
+                <span>Email Settings &amp; Send</span>
               </div>
               <div className="card-subtitle">
-                Delivery parameters &amp; safe rate control
+                Choose template, sender name, and delivery speed
               </div>
             </div>
           </div>
@@ -959,7 +958,7 @@ export default function CampaignsPage() {
           {/* Template Selection */}
           <div className="form-group" style={{ marginBottom: '10px' }}>
             <label className="form-label">
-              Proposal Email Template <span className="required">*</span>
+              Choose Email Template <span className="required">*</span>
             </label>
             <select
               value={selectedTemplateId}
@@ -977,7 +976,7 @@ export default function CampaignsPage() {
           {/* Sender Identity */}
           <div className="form-group" style={{ marginBottom: '10px' }}>
             <label className="form-label">
-              Sender Signature Name
+              Sender Name (From Name)
             </label>
             <input
               type="text"
@@ -992,10 +991,10 @@ export default function CampaignsPage() {
           <div className="form-group" style={{ marginBottom: '10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
               <label className="form-label" style={{ margin: 0 }}>
-                Sending Delay Between Emails
+                Delay Between Emails (Anti-Spam)
               </label>
               <span style={{ fontSize: '12px', fontWeight: 700, color: '#38BDF8', fontFamily: 'monospace' }}>
-                {throttleDelaySec}s delay / send
+                {throttleDelaySec}s pause / email
               </span>
             </div>
             <input
@@ -1009,8 +1008,8 @@ export default function CampaignsPage() {
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#64748B', marginTop: '2px' }}>
               <span>Fast (0.5s)</span>
-              <span style={{ color: '#10B981' }}>Safe Recommended (1.5s - 2.0s)</span>
-              <span>Ultra-Safe (5.0s)</span>
+              <span style={{ color: '#10B981' }}>Recommended Safe (1.5s - 2.0s)</span>
+              <span>Extra Safe (5.0s)</span>
             </div>
           </div>
 
@@ -1025,7 +1024,7 @@ export default function CampaignsPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <ShieldCheck size={16} color="#10B981" />
                 <span style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF' }}>
-                  Prevent Duplicate Emails
+                  Duplicate Email Protection
                 </span>
               </div>
               <input
@@ -1038,9 +1037,9 @@ export default function CampaignsPage() {
             </div>
             <p style={{ fontSize: '11px', color: '#94A3B8', margin: 0 }}>
               {bypassDuplicateCheck ? (
-                <span style={{ color: '#F59E0B' }}>⚠️ Protection off: Will re-send to previously contacted institutions.</span>
+                <span style={{ color: '#F59E0B' }}>⚠️ Protection off: Will re-send to previously contacted colleges.</span>
               ) : (
-                <span style={{ color: '#10B981' }}>✓ Active: Prevents re-contacting any institution reached in the last 30 days.</span>
+                <span style={{ color: '#10B981' }}>✓ Protected: Automatically skips colleges emailed in the last 30 days.</span>
               )}
             </p>
           </div>
@@ -1064,7 +1063,7 @@ export default function CampaignsPage() {
               }}
             >
               <FileText size={13} />
-              <span>{showCustomizeContent ? 'Hide Custom Email Editor' : 'Customize Email Content for this Batch'}</span>
+              <span>{showCustomizeContent ? 'Hide Custom Email Editor' : 'Preview or Edit Email Content Before Sending'}</span>
             </button>
 
             {showCustomizeContent && (
@@ -1096,7 +1095,7 @@ export default function CampaignsPage() {
             )}
           </div>
 
-          {/* Live Progress Bar during active dispatch */}
+          {/* Live Progress Bar during active send */}
           {isSending && (
             <div style={{
               background: 'rgba(255, 50, 75, 0.08)',
@@ -1109,7 +1108,7 @@ export default function CampaignsPage() {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <RefreshCw size={13} className="spin" color="#FF324B" /> Dispatching Batch...
+                  <RefreshCw size={13} className="spin" color="#FF324B" /> Sending Emails...
                 </span>
                 <span style={{ fontSize: '12px', fontWeight: 800, color: '#FF324B', fontFamily: 'monospace' }}>
                   {progressPercent}%
@@ -1133,11 +1132,11 @@ export default function CampaignsPage() {
               padding: '12px 14px'
             }}>
               <div style={{ fontSize: '12px', fontWeight: 700, color: '#10B981', marginBottom: '4px' }}>
-                ✓ Campaign Batch Dispatched
+                ✓ Emails Successfully Sent
               </div>
               <div style={{ fontSize: '11px', color: '#CBD5E1', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <span>Sent: <strong style={{ color: '#10B981' }}>{campaignResults.summary.sent}</strong></span>
-                <span>Duplicate Skipped: <strong style={{ color: '#F59E0B' }}>{campaignResults.summary.skippedDuplicates}</strong></span>
+                <span>Delivered: <strong style={{ color: '#10B981' }}>{campaignResults.summary.sent}</strong></span>
+                <span>Skipped (Already Contacted): <strong style={{ color: '#F59E0B' }}>{campaignResults.summary.skippedDuplicates}</strong></span>
                 <span>Failed: <strong style={{ color: '#EF4444' }}>{campaignResults.summary.failed}</strong></span>
               </div>
             </div>
@@ -1164,12 +1163,12 @@ export default function CampaignsPage() {
             {isSending ? (
               <>
                 <RefreshCw size={16} className="spin" />
-                <span>Transmitting Batch ({progressPercent}%)...</span>
+                <span>Sending Emails ({progressPercent}%)...</span>
               </>
             ) : (
               <>
                 <Send size={16} />
-                <span>Launch Outreach to {selectedIds.size} Selected Colleges</span>
+                <span>Send Emails to {selectedIds.size} Selected Colleges</span>
               </>
             )}
           </button>

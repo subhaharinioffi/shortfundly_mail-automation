@@ -120,12 +120,27 @@ export function formatHtmlEmail(plainText, recipientEmail = '') {
   // Step 1: Escape all raw HTML to prevent injection and XSS
   let safeText = escapeHtml(plainText);
 
-  // Step 2: Convert markdown links only if URL starts with safe protocols (http, https, mailto)
-  let html = safeText.replace(/\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^)]+)\)/gi, (match, label, url) => {
+  // Step 2: Convert markdown images FIRST before markdown links
+  // Syntax: ![Alt description](https://example.com/logo.png)
+  let html = safeText.replace(/!\[([^\]]*)\]\(((?:https?:\/\/|data:image\/)[^)]+)\)/gi, (match, alt, url) => {
+    const cleanAlt = alt ? alt.trim() : 'Shortfundly Visual';
+    return `<div style="margin: 18px 0; text-align: center;"><img src="${url}" alt="${cleanAlt}" style="max-width: 100%; max-height: 280px; height: auto; border-radius: 8px; border: 1px solid #E2E8F0; display: inline-block; object-fit: contain; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" /></div>`;
+  });
+
+  // Step 3: Convert markdown CTA Buttons
+  // Syntax: [button:Action Label](https://example.com) or [cta:Action Label](https://example.com)
+  html = html.replace(/\[(?:button|cta):([^\]]+)\]\((https?:\/\/[^)]+)\)/gi, (match, label, url) => {
+    return `<div style="margin: 22px 0; text-align: center;"><a href="${url}" target="_blank" rel="noopener noreferrer" style="background: #FF324B; color: #ffffff !important; padding: 12px 26px; text-decoration: none; border-radius: 8px; font-weight: 700; display: inline-block; box-shadow: 0 4px 12px rgba(255,50,75,0.25); font-size: 14px; letter-spacing: 0.02em;">${label.trim()}</a></div>`;
+  });
+
+  // Step 4: Convert markdown links (Brochure PDF, Website, Drive links)
+  // Syntax: [Link Label](https://...)
+  html = html.replace(/\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^)]+)\)/gi, (match, label, url) => {
     return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #FF324B; text-decoration: underline; font-weight: 600;">${label}</a>`;
   });
 
-  // Step 3: Convert markdown bold *text*
+  // Step 5: Convert markdown bold **text** or *text*
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
   
   const paragraphs = html.split(/\n\s*\n/).map(p => {
@@ -138,12 +153,15 @@ export function formatHtmlEmail(plainText, recipientEmail = '') {
       const items = trimmed.split(/\n/).map(line => `<li style="margin-bottom: 6px;">${line.replace(/^\d+\.\s*/, '')}</li>`).join('');
       return `<ol style="margin: 12px 0 16px 20px; padding: 0; line-height: 1.65; color: #1E293B;">${items}</ol>`;
     }
+    if (trimmed.startsWith('<div style="margin:') && trimmed.endsWith('</div>')) {
+      return trimmed;
+    }
     return `<p style="margin: 0 0 14px 0; line-height: 1.65; font-size: 15px; color: #1E293B;">${trimmed.replace(/\n/g, '<br/>')}</p>`;
   }).join('');
 
-  // Human-style, clean direct email layout (No bulky marketing frames that trigger spam filters)
+  // Human-style, clean direct email layout with verified footer
   return `
-<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.65; color: #1E293B; max-width: 620px; margin: 0 auto; padding: 12px 4px;">
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.65; color: #1E293B; max-width: 620px; margin: 0 auto; padding: 16px 12px;">
   ${paragraphs}
   
   <div style="margin-top: 28px; padding-top: 16px; border-top: 1px solid #E2E8F0; font-size: 13px; color: #64748B; line-height: 1.6;">
@@ -259,14 +277,18 @@ To unsubscribe, reply with 'Unsubscribe'.`;
     }
 
     const transporter = createTransporter();
-    // Dispatch pure plain-text email (zero HTML overhead for optimal inbox placement)
-    const info = await transporter.sendMail({
+    // Dispatch multipart email: rich HTML rendering for clients that support images/links + clean plain-text fallback
+    const mailOptions = {
       from: `"${senderDisplayName}" <${fromAddress}>`,
       replyTo: `"${senderDisplayName}" <${replyToAddress}>`,
       to: params.recipientEmail,
       subject: personalizedSubject,
       text: plainTextWithFooter,
-    });
+    };
+    if (htmlContent) {
+      mailOptions.html = htmlContent;
+    }
+    const info = await transporter.sendMail(mailOptions);
 
     // 5. Log Success
     db.prepare(`
