@@ -7,9 +7,7 @@ import { sendEmailMessage } from '@/lib/mailer';
 export async function GET(req) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Non-blocking session check for public view / admin access
 
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search') || '';

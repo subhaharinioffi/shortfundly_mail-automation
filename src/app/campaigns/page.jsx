@@ -1,27 +1,18 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  Send, 
-  CheckSquare, 
-  Square, 
-  ShieldCheck, 
-  AlertTriangle, 
-  RefreshCw, 
-  CheckCircle2, 
-  AlertCircle, 
-  Filter, 
-  Clock, 
-  FileText, 
-  Users, 
-  GraduationCap, 
-  ExternalLink, 
-  ArrowRight,
-  Sliders,
-  XCircle,
+import {
+  Send,
+  CheckSquare,
+  Square,
+  ShieldCheck,
+  AlertTriangle,
+  RefreshCw,
+  CheckCircle2,
+  AlertCircle,
+  Filter,
   Layers,
   ChevronLeft,
   ChevronRight,
@@ -32,36 +23,47 @@ import {
   X,
   Building,
   Mail,
-  UserCheck
+  UserCheck,
+  ExternalLink,
+  Sliders,
+  FileText,
+  MapPin,
+  Clock,
+  Globe,
+  Copy,
 } from 'lucide-react';
-import { FilmstripIcon, PlayCinemaIcon } from '@/components/Icons';
 
 export default function CampaignsPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { data: session } = useSession();
 
-  // Raw Database Data
+  // Colleges & Templates Data
   const [colleges, setColleges] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Filters
-  const [filterCity, setFilterCity] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('uncontacted'); // default target uncontacted!
-  const [filterDepartment, setFilterDepartment] = useState('all');
+  // Filter States
+  const [availableStates, setAvailableStates] = useState([]);
+  const [availableDistricts, setAvailableDistricts] = useState([]);
+  const [selectedCountry, setSelectedCountry] = useState('India');
+  const [selectedState, setSelectedState] = useState('all');
+  const [selectedDistrict, setSelectedDistrict] = useState('all');
+  const [selectedRole, setSelectedRole] = useState('all');
   const [search, setSearch] = useState('');
 
-  // Auto Separate Batch System
-  const [batchSize, setBatchSize] = useState(50);
-  const [customBatchInput, setCustomBatchInput] = useState('50');
+  // Selected Colleges and Target Contact Overrides
+  // selectedIds: Set of collegeId strings
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  // contactOverrides: { [collegeId]: { email, role, personName } }
+  const [contactOverrides, setContactOverrides] = useState({});
+
+  // Auto Batching System
+  const [batchSize, setBatchSize] = useState(25);
+  const [customBatchInput, setCustomBatchInput] = useState('25');
   const [activeBatchIndex, setActiveBatchIndex] = useState(0);
   const [viewMode, setViewMode] = useState('active_batch'); // 'active_batch' | 'all_selected' | 'all_filtered'
   const [listPage, setListPage] = useState(1);
   const listPageSize = 25;
-
-  // Selected Colleges for Current Dispatch
-  const [selectedIds, setSelectedIds] = useState(new Set());
 
   // Campaign Settings
   const [senderName, setSenderName] = useState('Shortfundly Campus Team');
@@ -69,139 +71,183 @@ export default function CampaignsPage() {
   const [customSubject, setCustomSubject] = useState('');
   const [customBody, setCustomBody] = useState('');
   const [showCustomizeContent, setShowCustomizeContent] = useState(false);
-  const [throttleDelaySec, setThrottleDelaySec] = useState(1.5); // Safe Google SMTP spacing
+  const [throttleDelaySec, setThrottleDelaySec] = useState(1.5); // Safe anti-spam spacing
 
-  // Dispatch Execution State
+  // Live Dispatch Execution State
   const [isSending, setIsSending] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
   const [currentProgressText, setCurrentProgressText] = useState('');
   const [campaignResults, setCampaignResults] = useState(null);
   const [alert, setAlert] = useState(null);
+  const [copiedEmail, setCopiedEmail] = useState(null);
 
-  // Fetch colleges and templates
-  const fetchInitialData = async () => {
+  // 1. Load Filter Options (States & Districts)
+  const fetchFilters = useCallback(async (stateParam = '') => {
+    try {
+      const url = stateParam && stateParam !== 'all'
+        ? `/api/colleges/filters?state=${encodeURIComponent(stateParam)}`
+        : '/api/colleges/filters';
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.states && availableStates.length === 0) {
+        setAvailableStates(data.states);
+      }
+      if (data.districts) {
+        setAvailableDistricts(data.districts);
+      }
+    } catch (err) {
+      console.warn('Failed to load filter options:', err);
+    }
+  }, [availableStates.length]);
+
+  // 2. Fetch Colleges matching current filters
+  const fetchColleges = useCallback(async () => {
     setLoading(true);
     try {
-      const [colRes, tmplRes] = await Promise.all([
-        fetch('/api/colleges?limit=all'),
-        fetch('/api/templates'),
-      ]);
+      const params = new URLSearchParams();
+      params.append('limit', 'all');
+      if (selectedCountry && selectedCountry !== 'all') params.append('country', selectedCountry);
+      if (selectedState && selectedState !== 'all') params.append('state', selectedState);
+      if (selectedDistrict && selectedDistrict !== 'all') params.append('district', selectedDistrict);
+      if (selectedRole && selectedRole !== 'all') params.append('role', selectedRole);
+      if (search.trim()) params.append('search', search.trim());
 
-      const colData = await colRes.json();
-      const tmplData = await tmplRes.json();
+      const res = await fetch(`/api/colleges?${params.toString()}`);
+      const data = await res.json();
+      const list = data.colleges || [];
+      setColleges(list);
 
-      const allColleges = colData.colleges || [];
-      setColleges(allColleges);
+      // Auto-select first batch if nothing selected yet or filters changed
+      const initialBatch = list.slice(0, batchSize).map((c) => c.id);
+      setSelectedIds(new Set(initialBatch));
+      setActiveBatchIndex(0);
+      setListPage(1);
+    } catch (err) {
+      console.error('Failed to load colleges:', err);
+      setAlert({ type: 'danger', message: 'Failed to retrieve college directory data.' });
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedCountry, selectedState, selectedDistrict, selectedRole, search, batchSize]);
 
-      const allTemplates = tmplData.templates || [];
-      setTemplates(allTemplates);
+  // 3. Fetch Templates
+  const fetchTemplates = async () => {
+    try {
+      const res = await fetch('/api/templates');
+      const data = await res.json();
+      const tmpls = data.templates || [];
+      setTemplates(tmpls);
 
-      if (allTemplates.length > 0) {
-        const defaultTmpl = allTemplates.find(t => t.is_default) || allTemplates[0];
+      if (tmpls.length > 0) {
+        const defaultTmpl = tmpls.find((t) => t.is_default) || tmpls[0];
         setSelectedTemplateId(defaultTmpl.id);
         setCustomSubject(defaultTmpl.subject);
         setCustomBody(defaultTmpl.body);
       }
-
-      // Default select the first batch of 50 uncontacted colleges for instant, unstressful readiness
-      const uncontacted = allColleges.filter(c => c.status === 'uncontacted');
-      const firstBatchIds = uncontacted.slice(0, 50).map(c => c.id);
-      setSelectedIds(new Set(firstBatchIds));
-
     } catch (err) {
-      console.error('Failed to load campaign data', err);
-      setAlert({ type: 'danger', message: 'Failed to load colleges data.' });
-    } finally {
-      setLoading(false);
+      console.warn('Failed to load email templates:', err);
     }
   };
 
+  // Initial Load
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    } else if (status === 'authenticated') {
-      fetchInitialData();
-      if (session?.user?.name) {
-        setSenderName(session.user.name);
-      }
+    fetchFilters();
+    fetchTemplates();
+    if (session?.user?.name) {
+      setSenderName(session.user.name);
     }
-  }, [status]);
+  }, [fetchFilters, session]);
 
-  // When template selection changes
+  // Re-fetch districts when selected state changes
+  useEffect(() => {
+    fetchFilters(selectedState);
+    setSelectedDistrict('all');
+  }, [selectedState, fetchFilters]);
+
+  // Re-fetch colleges when filters change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchColleges();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [fetchColleges]);
+
+  // Handle Template Dropdown Change
   const handleTemplateChange = (e) => {
     const id = parseInt(e.target.value, 10);
     setSelectedTemplateId(id);
-    const tmpl = templates.find(t => t.id === id);
+    const tmpl = templates.find((t) => t.id === id);
     if (tmpl) {
       setCustomSubject(tmpl.subject);
       setCustomBody(tmpl.body);
     }
   };
 
-  // Distinct cities and departments for dropdowns
-  const uniqueCities = useMemo(() => {
-    const set = new Set();
-    colleges.forEach(c => { if (c.city) set.add(c.city); });
-    return Array.from(set).sort();
-  }, [colleges]);
-
-  // Memoized Filtered Colleges (Ultra Fast)
-  const filteredColleges = useMemo(() => {
-    return colleges.filter((col) => {
-      if (filterCity !== 'all' && col.city !== filterCity) return false;
-      if (filterStatus !== 'all' && col.status !== filterStatus) return false;
-      
-      if (filterDepartment !== 'all') {
-        const dept = (col.department || '').toLowerCase();
-        if (filterDepartment === 'principal') {
-          if (!dept.includes('principal') && !dept.includes('dean') && !dept.includes('leadership') && !dept.includes('govt sams')) return false;
-        } else if (filterDepartment === 'hod') {
-          if (!dept.includes('hod')) return false;
-        } else if (filterDepartment === 'faculty') {
-          if (!dept.includes('faculty') && !dept.includes('professor') && !dept.includes('staff')) return false;
-        } else if (filterDepartment === 'admin') {
-          if (!dept.includes('admin') && !dept.includes('general') && !dept.includes('office')) return false;
-        }
+  // Helper to resolve the best recipient email for a college
+  const getResolvedRecipient = useCallback((col) => {
+    if (contactOverrides[col.id]) {
+      return contactOverrides[col.id];
+    }
+    // Match filtered role if active
+    if (selectedRole !== 'all' && col.contacts?.length > 0) {
+      const matched = col.contacts.find((ct) =>
+        ct.role.toLowerCase().includes(selectedRole.toLowerCase())
+      );
+      if (matched) {
+        return {
+          email: matched.email,
+          role: matched.role,
+          personName: matched.personName || '',
+        };
       }
+    }
+    // Default to first contact or official email
+    if (col.contacts?.length > 0) {
+      return {
+        email: col.contacts[0].email,
+        role: col.contacts[0].role,
+        personName: col.contacts[0].personName || '',
+      };
+    }
+    return {
+      email: col.officialEmail || '',
+      role: 'Official Institution',
+      personName: '',
+    };
+  }, [contactOverrides, selectedRole]);
 
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        const matchName = col.college_name && col.college_name.toLowerCase().includes(q);
-        const matchEmail = col.email && col.email.toLowerCase().includes(q);
-        const matchDept = col.department && col.department.toLowerCase().includes(q);
-        const matchPerson = col.contact_person && col.contact_person.toLowerCase().includes(q);
-        if (!matchName && !matchEmail && !matchDept && !matchPerson) return false;
-      }
-      return true;
-    });
-  }, [colleges, filterCity, filterStatus, filterDepartment, search]);
+  // Set contact override for a specific college
+  const setContactOverride = (collegeId, email, role, personName) => {
+    setContactOverrides((prev) => ({
+      ...prev,
+      [collegeId]: { email, role, personName },
+    }));
+  };
 
-  // AUTO-SEPARATE BATCH CALCULATION
+  // AUTO-SEPARATE BATCHES CALCULATION
   const batches = useMemo(() => {
     const bList = [];
     const size = Math.max(1, batchSize);
-    const totalItems = filteredColleges.length;
+    const totalItems = colleges.length;
     const totalBatches = Math.ceil(totalItems / size) || 1;
 
     for (let i = 0; i < totalBatches; i++) {
       const startIdx = i * size;
       const endIdx = Math.min(startIdx + size, totalItems);
-      const items = filteredColleges.slice(startIdx, endIdx);
-      const uncontactedCount = items.filter(c => c.status === 'uncontacted').length;
-      
+      const items = colleges.slice(startIdx, endIdx);
+
       bList.push({
         batchNumber: i + 1,
         startIndex: startIdx + 1,
         endIndex: endIdx,
         count: items.length,
         items,
-        uncontactedCount,
       });
     }
     return bList;
-  }, [filteredColleges, batchSize]);
+  }, [colleges, batchSize]);
 
-  // Keep activeBatchIndex within bounds when filtered results change
+  // Keep active batch index within bounds
   useEffect(() => {
     if (activeBatchIndex >= batches.length) {
       setActiveBatchIndex(0);
@@ -210,25 +256,25 @@ export default function CampaignsPage() {
 
   const activeBatch = batches[activeBatchIndex] || batches[0] || { items: [], count: 0, startIndex: 0, endIndex: 0 };
 
-  // Determine which items to render in list based on viewMode (Ultra unstressful DOM load)
+  // Determine which items to render in list based on viewMode
   const displayItems = useMemo(() => {
     if (viewMode === 'active_batch') {
       return activeBatch.items || [];
     }
     if (viewMode === 'all_selected') {
-      return colleges.filter(c => selectedIds.has(c.id));
+      return colleges.filter((c) => selectedIds.has(c.id));
     }
     // all_filtered paginated
     const start = (listPage - 1) * listPageSize;
-    return filteredColleges.slice(start, start + listPageSize);
-  }, [viewMode, activeBatch, colleges, selectedIds, filteredColleges, listPage]);
+    return colleges.slice(start, start + listPageSize);
+  }, [viewMode, activeBatch, colleges, selectedIds, listPage]);
 
-  // BATCH ACTIONS
+  // BATCH & SELECTION ACTIONS
   const selectSingleBatch = (bIndex) => {
     setActiveBatchIndex(bIndex);
     const targetBatch = batches[bIndex];
     if (targetBatch && targetBatch.items) {
-      setSelectedIds(new Set(targetBatch.items.map(c => c.id)));
+      setSelectedIds(new Set(targetBatch.items.map((c) => c.id)));
     }
   };
 
@@ -236,17 +282,22 @@ export default function CampaignsPage() {
     const targetBatch = batches[bIndex];
     if (targetBatch && targetBatch.items) {
       const next = new Set(selectedIds);
-      targetBatch.items.forEach(c => next.add(c.id));
+      targetBatch.items.forEach((c) => next.add(c.id));
       setSelectedIds(next);
     }
   };
 
   const selectAllFiltered = () => {
-    setSelectedIds(new Set(filteredColleges.map(c => c.id)));
+    setSelectedIds(new Set(colleges.map((c) => c.id)));
   };
 
   const deselectAll = () => {
     setSelectedIds(new Set());
+  };
+
+  const selectFirstN = (count) => {
+    const target = colleges.slice(0, count).map((c) => c.id);
+    setSelectedIds(new Set(target));
   };
 
   const toggleSelectOne = (id, e) => {
@@ -257,21 +308,27 @@ export default function CampaignsPage() {
     setSelectedIds(next);
   };
 
-  // Change Batch Size Handler
   const handleBatchSizeChange = (newSize) => {
-    setBatchSize(newSize);
-    setCustomBatchInput(String(newSize));
+    const sz = Math.max(1, newSize);
+    setBatchSize(sz);
+    setCustomBatchInput(String(sz));
     setActiveBatchIndex(0);
-    // Auto select first batch of new size
-    const newItems = filteredColleges.slice(0, newSize);
-    setSelectedIds(new Set(newItems.map(c => c.id)));
+    const newItems = colleges.slice(0, sz).map((c) => c.id);
+    setSelectedIds(new Set(newItems));
   };
 
-  // Launch Automated Email Outreach
+  const copyToClipboard = (text, e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    setCopiedEmail(text);
+    setTimeout(() => setCopiedEmail(null), 2000);
+  };
+
+  // Launch Automated Bulk Outreach Campaign
   const handleLaunchCampaign = async () => {
-    const targetColleges = colleges.filter(c => selectedIds.has(c.id));
+    const targetColleges = colleges.filter((c) => selectedIds.has(c.id));
     if (targetColleges.length === 0) {
-      setAlert({ type: 'danger', message: 'Please select at least one college from the list.' });
+      setAlert({ type: 'danger', message: 'Please select at least one college from the directory.' });
       return;
     }
 
@@ -280,12 +337,36 @@ export default function CampaignsPage() {
       return;
     }
 
-    const confirmMsg = `CONFIRM EMAIL OUTREACH:\n\n` +
-      `• Target Colleges: ${targetColleges.length} institutions\n` +
-      `• Active Group: Batch #${activeBatchIndex + 1}\n` +
-      `• Delay Between Emails: ${throttleDelaySec}s pause (Anti-Spam Safe)\n` +
-      `• Duplicate Protection: ${bypassDuplicateCheck ? 'OFF (Will Resend)' : 'ON (Prevents Duplicates)'}\n\n` +
-      `Send emails now?`;
+    // Build specific recipient payload with verified email addresses
+    const recipients = targetColleges.map((col) => {
+      const resolved = getResolvedRecipient(col);
+      return {
+        collegeId: col.id,
+        collegeName: col.collegeName,
+        recipientEmail: resolved.email,
+        role: resolved.role,
+        personName: resolved.personName,
+        state: col.state,
+        district: col.district,
+        websiteUrl: col.officialWebsite || '',
+      };
+    }).filter((r) => r.recipientEmail && r.recipientEmail.includes('@'));
+
+    if (recipients.length === 0) {
+      setAlert({
+        type: 'danger',
+        message: 'None of the selected institutions have a valid contact email. Please choose colleges with email addresses.',
+      });
+      return;
+    }
+
+    const confirmMsg =
+      `CONFIRM BULK OUTREACH DISPATCH:\n\n` +
+      `• Target Colleges: ${targetColleges.length} selected institutions\n` +
+      `• Valid Email Recipients: ${recipients.length} addresses\n` +
+      `• Batch / Delay: ${throttleDelaySec}s pause between emails (Anti-Spam Throttling)\n` +
+      `• Duplicate Protection: ${bypassDuplicateCheck ? 'OFF (Will Resend)' : 'ON (Protects Previously Contacted)'}\n\n` +
+      `Do you want to dispatch this email campaign now?`;
 
     if (!window.confirm(confirmMsg)) return;
 
@@ -299,20 +380,20 @@ export default function CampaignsPage() {
     let skippedCount = 0;
 
     setCampaignResults({
-      summary: { total: targetColleges.length, sent: 0, failed: 0, skippedDuplicates: 0 },
-      results: []
+      summary: { total: recipients.length, sent: 0, failed: 0, skippedDuplicates: 0 },
+      results: [],
     });
 
-    for (let i = 0; i < targetColleges.length; i++) {
-      const col = targetColleges[i];
+    for (let i = 0; i < recipients.length; i++) {
+      const rec = recipients[i];
       const currentNum = i + 1;
-      const pct = Math.round((i / targetColleges.length) * 100);
+      const pct = Math.round((i / recipients.length) * 100);
       setProgressPercent(pct);
-      setCurrentProgressText(`[${currentNum}/${targetColleges.length}] Sending to ${col.college_name} (${col.email})...`);
+      setCurrentProgressText(`[${currentNum}/${recipients.length}] Sending to ${rec.collegeName} (${rec.recipientEmail})...`);
 
       try {
         const payload = {
-          collegeIds: [col.id],
+          recipients: [rec],
           templateId: selectedTemplateId,
           customSubject: showCustomizeContent ? customSubject : undefined,
           customBody: showCustomizeContent ? customBody : undefined,
@@ -329,10 +410,10 @@ export default function CampaignsPage() {
 
         const data = await res.json();
         const outcome = data.results?.[0] || {
-          collegeName: col.college_name,
-          email: col.email,
+          collegeName: rec.collegeName,
+          email: rec.recipientEmail,
           status: 'failed',
-          error: data.error || 'Server error'
+          error: data.error || 'Server error',
         };
 
         if (outcome.status === 'sent') sentCount++;
@@ -343,71 +424,69 @@ export default function CampaignsPage() {
 
         setCampaignResults({
           summary: {
-            total: targetColleges.length,
+            total: recipients.length,
             sent: sentCount,
             failed: failedCount,
             skippedDuplicates: skippedCount,
           },
-          results: [...results]
+          results: [...results],
         });
 
-        // Throttle interval between recipients to respect Google SMTP rate limits
-        if (i < targetColleges.length - 1) {
-          await new Promise(r => setTimeout(r, throttleDelaySec * 1000));
+        // Delay between recipients to respect SMTP limits
+        if (i < recipients.length - 1) {
+          await new Promise((r) => setTimeout(r, throttleDelaySec * 1000));
         }
       } catch (err) {
         failedCount++;
         results.push({
-          collegeName: col.college_name,
-          email: col.email,
+          collegeName: rec.collegeName,
+          email: rec.recipientEmail,
           status: 'failed',
-          error: err.message || 'Transmission failed'
+          error: err.message || 'Transmission failed',
         });
       }
     }
 
     setProgressPercent(100);
-    setCurrentProgressText(`Sending complete! ${sentCount} successfully sent, ${skippedCount} duplicate skipped, ${failedCount} failed.`);
+    setCurrentProgressText(`Campaign completed! ${sentCount} sent, ${skippedCount} duplicate skipped, ${failedCount} failed.`);
     setIsSending(false);
-
-    // Refresh database colleges state
-    fetchInitialData();
   };
 
-  // Calculate estimated duration
+  // Estimate duration
   const estSeconds = Math.round(selectedIds.size * throttleDelaySec);
   const estMinutes = Math.floor(estSeconds / 60);
   const estRemainderSec = estSeconds % 60;
   const estFormatted = estMinutes > 0 ? `${estMinutes}m ${estRemainderSec}s` : `${estSeconds}s`;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
-      
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <span className="role-badge admin" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Zap size={11} /> Automated Email Outreach
+              <Zap size={11} /> Bulk Outreach Engine
             </span>
-            <span style={{ fontSize: '12px', color: '#94A3B8' }}>Google Workspace SMTP • High Deliverability • Rate Controlled</span>
+            <span style={{ fontSize: '12px', color: '#94A3B8' }}>
+              Automated Batch Processing • Anti-Spam Safe • Verified Indian Institutions
+            </span>
           </div>
           <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.5px' }}>
-            Automated Email Campaigns
+            Automated Bulk Email Campaigns
           </h1>
           <p style={{ fontSize: '13px', color: '#94A3B8', marginTop: '3px' }}>
-            Personalized outreach organized into safe, manageable batches across <strong>{colleges.length} verified Odisha colleges</strong>.
+            Target colleges by State, District, and Staff Role. Send structured outreach in clean, rate-controlled batches.
           </p>
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
           <Link href="/colleges" className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Building size={14} />
-            <span>Colleges Directory</span>
+            <span>College Directory</span>
           </Link>
           <Link href="/manual-send" className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Mail size={14} />
-            <span>Direct Single Send</span>
+            <span>Single Send</span>
           </Link>
           <Link href="/logs" className="btn btn-outline btn-sm">
             <span>Delivery Logs</span>
@@ -420,52 +499,77 @@ export default function CampaignsPage() {
         <div className={`alert-box ${alert.type}`} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {alert.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
           <span style={{ flex: 1, fontSize: '13px' }}>{alert.message}</span>
-          <button onClick={() => setAlert(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>
-            <XCircle size={15} />
+          <button
+            onClick={() => setAlert(null)}
+            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
+          >
+            <X size={15} />
           </button>
         </div>
       )}
 
-      {/* Summary Metric Ribbon */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-        gap: '12px',
-        background: 'var(--bg-card)',
-        padding: '14px 18px',
-        borderRadius: 'var(--radius-md)',
-        border: '1px solid var(--border-subtle)'
-      }}>
+      {/* Metric Summary Ribbon */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: '12px',
+          background: 'var(--bg-card)',
+          padding: '14px 18px',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-subtle)',
+        }}
+      >
         <div>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Target Colleges</span>
+          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Filtered Colleges
+          </span>
           <div style={{ fontSize: '22px', fontWeight: 800, color: '#FFFFFF', marginTop: '2px' }}>
-            {filteredColleges.length} <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>of {colleges.length}</span>
+            {loading ? '...' : colleges.length}{' '}
+            <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>institutions</span>
           </div>
         </div>
 
         <div>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Batches</span>
+          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Total Batches
+          </span>
           <div style={{ fontSize: '22px', fontWeight: 800, color: '#38BDF8', marginTop: '2px' }}>
-            {batches.length} <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>({batchSize} per batch)</span>
+            {batches.length}{' '}
+            <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>
+              ({batchSize} per batch)
+            </span>
           </div>
         </div>
 
         <div>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active Batch</span>
+          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Active Batch
+          </span>
           <div style={{ fontSize: '22px', fontWeight: 800, color: '#F59E0B', marginTop: '2px' }}>
-            Batch #{batches.length > 0 ? activeBatchIndex + 1 : 0} <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>({activeBatch.count} colleges)</span>
+            Batch #{batches.length > 0 ? activeBatchIndex + 1 : 0}{' '}
+            <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>
+              ({activeBatch.count} colleges)
+            </span>
           </div>
         </div>
 
         <div>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ready to Send</span>
+          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Ready to Send
+          </span>
           <div style={{ fontSize: '22px', fontWeight: 800, color: '#FF324B', marginTop: '2px' }}>
-            {selectedIds.size} <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>colleges selected</span>
+            {selectedIds.size}{' '}
+            <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>
+              selected
+            </span>
           </div>
         </div>
 
         <div>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Estimated Send Time</span>
+          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Estimated Dispatch
+          </span>
           <div style={{ fontSize: '22px', fontWeight: 800, color: '#10B981', marginTop: '2px' }}>
             ~{estFormatted}
           </div>
@@ -473,19 +577,19 @@ export default function CampaignsPage() {
       </div>
 
       {/* Main Studio 2-Column Split */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 0.75fr', gap: '22px' }}>
-        
+      <div style={{ display: 'grid', gridTemplateColumns: '1.28fr 0.72fr', gap: '22px' }}>
         {/* ================= COLUMN 1: RECIPIENT & BATCH SELECTION ================= */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '18px 20px' }}>
-          
-          {/* Section Heading */}
+          {/* Section Heading & Quick Select Controls */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Layers size={18} color="#FF324B" />
-              <span style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF' }}>Select Colleges &amp; Batches</span>
+              <span style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF' }}>
+                Target Colleges &amp; Batch Groups
+              </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 onClick={selectAllFiltered}
@@ -494,7 +598,7 @@ export default function CampaignsPage() {
                 style={{ fontSize: '11px', padding: '4px 10px' }}
               >
                 <CheckSquare size={12} color="#FF324B" />
-                <span>Select All Filtered ({filteredColleges.length})</span>
+                <span>Select All ({colleges.length})</span>
               </button>
               <button
                 type="button"
@@ -504,108 +608,175 @@ export default function CampaignsPage() {
                 style={{ fontSize: '11px', padding: '4px 10px' }}
               >
                 <Square size={12} />
-                <span>Deselect All</span>
+                <span>Clear</span>
               </button>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {[10, 25, 50, 100].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => selectFirstN(n)}
+                    className="btn btn-outline btn-sm"
+                    style={{ fontSize: '10px', padding: '3px 6px' }}
+                    title={`Select first ${n} colleges`}
+                  >
+                    +{n}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Filter Bar */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1.3fr 1fr 1fr 1fr', 
-            gap: '8px', 
-            background: 'rgba(255, 255, 255, 0.02)', 
-            padding: '10px 12px', 
-            borderRadius: '8px',
-            border: '1px solid rgba(255, 255, 255, 0.05)'
-          }}>
-            {/* Search */}
+          {/* Filters Bar: Country, State, District, Role, Search */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '0.85fr 1.15fr 1.15fr 1.1fr 1.4fr',
+              gap: '8px',
+              background: 'rgba(255, 255, 255, 0.02)',
+              padding: '10px 12px',
+              borderRadius: '8px',
+              border: '1px solid rgba(255, 255, 255, 0.05)',
+            }}
+          >
+            {/* Country Selector */}
+            <select
+              value={selectedCountry}
+              onChange={(e) => setSelectedCountry(e.target.value)}
+              className="form-select"
+              style={{ fontSize: '12px', height: '34px' }}
+            >
+              <option value="India">🇮🇳 India</option>
+              <option value="United States" disabled>🇺🇸 United States (Coming Soon)</option>
+              <option value="United Kingdom" disabled>🇬🇧 United Kingdom (Coming Soon)</option>
+              <option value="Canada" disabled>🇨🇦 Canada (Coming Soon)</option>
+            </select>
+
+            {/* State Selector */}
+            <select
+              value={selectedState}
+              onChange={(e) => setSelectedState(e.target.value)}
+              className="form-select"
+              style={{ fontSize: '12px', height: '34px' }}
+            >
+              <option value="all">All States ({availableStates.length})</option>
+              {availableStates.map((st) => (
+                <option key={st} value={st}>
+                  {st}
+                </option>
+              ))}
+            </select>
+
+            {/* District Selector */}
+            <select
+              value={selectedDistrict}
+              onChange={(e) => setSelectedDistrict(e.target.value)}
+              className="form-select"
+              style={{ fontSize: '12px', height: '34px' }}
+            >
+              <option value="all">
+                {selectedState === 'all'
+                  ? 'All Districts'
+                  : `All ${selectedState} Districts (${availableDistricts.length})`}
+              </option>
+              {availableDistricts.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+
+            {/* Staff Role Selector */}
+            <select
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+              className="form-select"
+              style={{ fontSize: '12px', height: '34px' }}
+            >
+              <option value="all">All Roles</option>
+              <option value="Principal">👑 Principal</option>
+              <option value="Dean">🎓 Dean</option>
+              <option value="Head of Department">🔬 HOD</option>
+              <option value="Placement">💼 Placement Cell</option>
+              <option value="Registrar">🏛️ Registrar</option>
+            </select>
+
+            {/* Search Input */}
             <div style={{ position: 'relative' }}>
               <input
                 type="text"
-                placeholder="Search college name, district, email..."
+                placeholder="Search college, city, or email..."
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setActiveBatchIndex(0); }}
+                onChange={(e) => setSearch(e.target.value)}
                 className="form-input"
-                style={{ fontSize: '12px', paddingLeft: '32px', height: '34px' }}
+                style={{ fontSize: '12px', paddingLeft: '30px', height: '34px' }}
               />
-              <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748B' }} />
+              <Search
+                size={13}
+                style={{
+                  position: 'absolute',
+                  left: '9px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#64748B',
+                }}
+              />
               {search && (
-                <button 
+                <button
+                  type="button"
                   onClick={() => setSearch('')}
-                  style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#94A3B8',
+                    cursor: 'pointer',
+                  }}
                 >
                   <X size={12} />
                 </button>
               )}
             </div>
-
-            {/* City / District Filter */}
-            <select
-              value={filterCity}
-              onChange={(e) => { setFilterCity(e.target.value); setActiveBatchIndex(0); }}
-              className="form-select"
-              style={{ fontSize: '12px', height: '34px' }}
-            >
-              <option value="all">All Districts ({uniqueCities.length})</option>
-              {uniqueCities.map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-
-            {/* Role / Department Filter */}
-            <select
-              value={filterDepartment}
-              onChange={(e) => { setFilterDepartment(e.target.value); setActiveBatchIndex(0); }}
-              className="form-select"
-              style={{ fontSize: '12px', height: '34px' }}
-            >
-              <option value="all">Filter by Contact Role</option>
-              <option value="principal">👑 Principals &amp; Deans</option>
-              <option value="hod">🎓 Department Heads (HODs)</option>
-              <option value="faculty">🔬 Professors &amp; Faculty</option>
-              <option value="admin">🏢 College Office &amp; Administration</option>
-            </select>
-
-            {/* Status Filter */}
-            <select
-              value={filterStatus}
-              onChange={(e) => { setFilterStatus(e.target.value); setActiveBatchIndex(0); }}
-              className="form-select"
-              style={{ fontSize: '12px', height: '34px' }}
-            >
-              <option value="uncontacted">Not Yet Emailed (New)</option>
-              <option value="sent">Already Contacted</option>
-              <option value="failed">Failed Delivery</option>
-              <option value="all">All Outreach Status</option>
-            </select>
           </div>
 
-          {/* AUTO SEPARATE BATCH CONTROLS */}
-          <div style={{
-            background: 'linear-gradient(180deg, rgba(31, 73, 125, 0.15) 0%, rgba(15, 23, 42, 0.25) 100%)',
-            border: '1px solid rgba(56, 189, 248, 0.2)',
-            borderRadius: '8px',
-            padding: '12px 14px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px'
-          }}>
+          {/* AUTO-SEPARATE BATCH SYSTEM CONTROLS */}
+          <div
+            style={{
+              background: 'linear-gradient(180deg, rgba(31, 73, 125, 0.15) 0%, rgba(15, 23, 42, 0.25) 100%)',
+              border: '1px solid rgba(56, 189, 248, 0.2)',
+              borderRadius: '8px',
+              padding: '12px 14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+            }}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Sparkles size={15} color="#38BDF8" />
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#38BDF8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Batch Size &amp; Groups
+                <span
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: '#38BDF8',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  Batch Partitioning
                 </span>
                 <span style={{ fontSize: '11px', color: '#94A3B8' }}>
-                  ({filteredColleges.length} colleges split into {batches.length} groups of {batchSize})
+                  ({colleges.length} colleges divided into {batches.length} batch groups)
                 </span>
               </div>
 
               {/* Batch Size Selector Buttons */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <span style={{ fontSize: '11px', color: '#64748B' }}>Batch Size:</span>
-                {[25, 50, 100, 200].map(sz => (
+                {[10, 25, 50, 100, 200].map((sz) => (
                   <button
                     key={sz}
                     type="button"
@@ -617,7 +788,7 @@ export default function CampaignsPage() {
                       fontWeight: 600,
                       background: batchSize === sz ? '#FF324B' : 'rgba(255, 255, 255, 0.05)',
                       color: batchSize === sz ? '#FFFFFF' : '#94A3B8',
-                      border: '1px solid ' + (batchSize === sz ? '#FF324B' : 'rgba(255, 255, 255, 0.1)')
+                      border: '1px solid ' + (batchSize === sz ? '#FF324B' : 'rgba(255, 255, 255, 0.1)'),
                     }}
                   >
                     {sz}
@@ -627,17 +798,19 @@ export default function CampaignsPage() {
             </div>
 
             {/* Interactive Scrollable Batch Tabs Ribbon */}
-            <div style={{ 
-              display: 'flex', 
-              gap: '6px', 
-              overflowX: 'auto', 
-              paddingBottom: '4px',
-              scrollbarWidth: 'thin'
-            }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: '6px',
+                overflowX: 'auto',
+                paddingBottom: '4px',
+                scrollbarWidth: 'thin',
+              }}
+            >
               {batches.map((b, idx) => {
                 const isActive = activeBatchIndex === idx;
-                const batchLeadIds = b.items.map(c => c.id);
-                const selectedInBatch = batchLeadIds.filter(id => selectedIds.has(id)).length;
+                const batchColIds = b.items.map((c) => c.id);
+                const selectedInBatch = batchColIds.filter((id) => selectedIds.has(id)).length;
                 const isFullySelected = selectedInBatch === b.count && b.count > 0;
                 const isPartiallySelected = selectedInBatch > 0 && !isFullySelected;
 
@@ -652,12 +825,13 @@ export default function CampaignsPage() {
                       alignItems: 'flex-start',
                       padding: '6px 12px',
                       borderRadius: '6px',
-                      minWidth: '115px',
+                      minWidth: '120px',
                       cursor: 'pointer',
                       border: isActive ? '1px solid #FF324B' : '1px solid rgba(255, 255, 255, 0.08)',
                       background: isActive ? 'rgba(255, 50, 75, 0.15)' : 'rgba(15, 23, 42, 0.6)',
                       color: isActive ? '#FFFFFF' : '#94A3B8',
-                      transition: 'all 0.15s ease'
+                      transition: 'all 0.15s ease',
+                      flexShrink: 0,
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
@@ -667,7 +841,9 @@ export default function CampaignsPage() {
                       {isFullySelected ? (
                         <Check size={12} color="#10B981" />
                       ) : isPartiallySelected ? (
-                        <span style={{ fontSize: '9px', color: '#F59E0B' }}>{selectedInBatch}/{b.count}</span>
+                        <span style={{ fontSize: '9px', color: '#F59E0B' }}>
+                          {selectedInBatch}/{b.count}
+                        </span>
                       ) : null}
                     </div>
                     <div style={{ fontSize: '10px', color: '#64748B', marginTop: '2px' }}>
@@ -679,15 +855,17 @@ export default function CampaignsPage() {
             </div>
 
             {/* Active Batch Quick Action Bar */}
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              flexWrap: 'wrap', 
-              gap: '8px', 
-              paddingTop: '6px', 
-              borderTop: '1px solid rgba(255, 255, 255, 0.06)' 
-            }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '8px',
+                paddingTop: '6px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+              }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <button
                   type="button"
@@ -744,7 +922,7 @@ export default function CampaignsPage() {
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontWeight: 600,
-                  fontSize: '11px'
+                  fontSize: '11px',
                 }}
               >
                 Active Batch ({activeBatch.count})
@@ -760,7 +938,7 @@ export default function CampaignsPage() {
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontWeight: 600,
-                  fontSize: '11px'
+                  fontSize: '11px',
                 }}
               >
                 Selected ({selectedIds.size})
@@ -776,10 +954,10 @@ export default function CampaignsPage() {
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontWeight: 600,
-                  fontSize: '11px'
+                  fontSize: '11px',
                 }}
               >
-                All Matching ({filteredColleges.length})
+                All Filtered ({colleges.length})
               </button>
             </div>
 
@@ -789,43 +967,35 @@ export default function CampaignsPage() {
           </div>
 
           {/* Recipient Cards Table */}
-          <div style={{ 
-            maxHeight: '440px', 
-            overflowY: 'auto', 
-            border: '1px solid var(--border-subtle)', 
-            borderRadius: '8px',
-            background: 'rgba(7, 9, 14, 0.8)'
-          }}>
-            {displayItems.length === 0 ? (
+          <div
+            style={{
+              maxHeight: '440px',
+              overflowY: 'auto',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '8px',
+              background: 'rgba(7, 9, 14, 0.8)',
+            }}
+          >
+            {loading ? (
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
+                <RefreshCw size={24} className="spin" style={{ margin: '0 auto 10px', color: '#FF324B' }} />
+                <div>Loading colleges from directory...</div>
+              </div>
+            ) : displayItems.length === 0 ? (
               <div style={{ padding: '44px 20px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
-                <Users size={32} color="#64748B" style={{ margin: '0 auto 10px' }} />
-                {colleges.length === 0 ? (
-                  <>
-                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#FFFFFF' }}>No Colleges Loaded Yet</div>
-                    <div style={{ fontSize: '12px', color: '#94A3B8', maxWidth: '380px', margin: '6px auto 16px' }}>
-                      Please upload your official Odisha colleges spreadsheet (.xlsx or .csv) from the College Directory page to start sending.
-                    </div>
-                    <Link href="/colleges" className="btn btn-primary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                      <Building size={14} />
-                      <span>Go to College Directory &amp; Upload</span>
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>No colleges match active filters</div>
-                    <div style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>
-                      Try adjusting your search query, city filter, or selecting a different batch.
-                    </div>
-                  </>
-                )}
+                <Building size={32} color="#64748B" style={{ margin: '0 auto 10px' }} />
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>
+                  No colleges match the active filters
+                </div>
+                <div style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>
+                  Try choosing a different state, clearing the district filter, or broadening the search query.
+                </div>
               </div>
             ) : (
               displayItems.map((col, index) => {
                 const isSelected = selectedIds.has(col.id);
-                const deptLower = (col.department || '').toLowerCase();
-                const isLeadership = deptLower.includes('principal') || deptLower.includes('dean') || deptLower.includes('leadership');
-                const isHOD = deptLower.includes('hod');
-                const isFaculty = deptLower.includes('faculty') || deptLower.includes('prof');
+                const resolved = getResolvedRecipient(col);
+                const hasMultipleContacts = col.contacts && col.contacts.length > 1;
 
                 return (
                   <div
@@ -840,7 +1010,7 @@ export default function CampaignsPage() {
                       background: isSelected ? 'rgba(255, 50, 75, 0.08)' : 'transparent',
                       borderLeft: isSelected ? '3px solid #FF324B' : '3px solid transparent',
                       cursor: 'pointer',
-                      transition: 'background 0.12s ease'
+                      transition: 'background 0.12s ease',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
@@ -849,59 +1019,150 @@ export default function CampaignsPage() {
                         checked={isSelected}
                         onChange={(e) => toggleSelectOne(col.id, e)}
                         onClick={(e) => e.stopPropagation()}
-                        style={{ width: '16px', height: '16px', accentColor: '#FF324B', cursor: 'pointer', flexShrink: 0 }}
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          accentColor: '#FF324B',
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                        }}
                       />
-                      <span style={{ fontSize: '11px', color: '#64748B', fontFamily: 'monospace', minWidth: '32px' }}>
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          color: '#64748B',
+                          fontFamily: 'monospace',
+                          minWidth: '32px',
+                        }}
+                      >
                         #{index + 1}
                       </span>
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ 
-                          fontSize: '13px', 
-                          fontWeight: 600, 
-                          color: isSelected ? '#FFFFFF' : '#CBD5E1',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}>
-                          {col.college_name}
+                        <div
+                          style={{
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: isSelected ? '#FFFFFF' : '#CBD5E1',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {col.collegeName}
                         </div>
-                        <div style={{ fontSize: '11px', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '2px' }}>
-                          <span>{col.city}</span>
+                        <div
+                          style={{
+                            fontSize: '11px',
+                            color: '#94A3B8',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            flexWrap: 'wrap',
+                            marginTop: '2px',
+                          }}
+                        >
+                          <span style={{ color: '#38BDF8' }}>
+                            {col.state} • {col.district}
+                          </span>
                           <span>•</span>
-                          <span style={{ fontFamily: 'monospace', color: '#FF6B7E' }}>{col.email}</span>
-                          {col.contact_person && (
+                          <span
+                            style={{
+                              fontFamily: 'monospace',
+                              color: resolved.email ? '#FF6B7E' : '#EF4444',
+                              fontWeight: 500,
+                            }}
+                          >
+                            {resolved.email || 'No email detected'}
+                          </span>
+                          {resolved.personName && (
                             <>
                               <span>•</span>
-                              <span style={{ color: '#E2E8F0' }}>{col.contact_person}</span>
+                              <span style={{ color: '#E2E8F0' }}>{resolved.personName}</span>
                             </>
+                          )}
+                          {col.officialWebsite && (
+                            <a
+                              href={col.officialWebsite}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              style={{ color: '#64748B', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
+                            >
+                              <ExternalLink size={10} />
+                            </a>
                           )}
                         </div>
                       </div>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, marginLeft: '12px' }}>
-                      {/* Department / Role Badge */}
-                      {isLeadership ? (
-                        <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-                          👑 Principal / Dean
-                        </span>
-                      ) : isHOD ? (
-                        <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: 'rgba(168, 85, 247, 0.15)', color: '#C084FC', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
-                          🎓 HOD
-                        </span>
-                      ) : isFaculty ? (
-                        <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', background: 'rgba(56, 189, 248, 0.15)', color: '#38BDF8', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
-                          🔬 Faculty
-                        </span>
+                      {/* Target Role Selector or Pill */}
+                      {hasMultipleContacts ? (
+                        <select
+                          value={resolved.email}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            const chosenEmail = e.target.value;
+                            const matchedContact = col.contacts.find((ct) => ct.email === chosenEmail);
+                            if (matchedContact) {
+                              setContactOverride(col.id, matchedContact.email, matchedContact.role, matchedContact.personName);
+                            } else if (chosenEmail === col.officialEmail) {
+                              setContactOverride(col.id, col.officialEmail, 'Official Institution', '');
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="form-select"
+                          style={{
+                            fontSize: '11px',
+                            padding: '2px 8px',
+                            height: '26px',
+                            background: 'rgba(15, 23, 42, 0.8)',
+                            borderColor: 'rgba(56, 189, 248, 0.3)',
+                            color: '#38BDF8',
+                          }}
+                        >
+                          {col.officialEmail && (
+                            <option value={col.officialEmail}>🏛️ Official: {col.officialEmail}</option>
+                          )}
+                          {col.contacts.map((ct) => (
+                            <option key={ct.id || ct.email} value={ct.email}>
+                              {ct.role}: {ct.email} {ct.personName ? `(${ct.personName})` : ''}
+                            </option>
+                          ))}
+                        </select>
                       ) : (
-                        <span style={{ fontSize: '9px', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', background: 'rgba(255, 255, 255, 0.05)', color: '#94A3B8' }}>
-                          Office
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            padding: '2px 7px',
+                            borderRadius: '4px',
+                            background: 'rgba(56, 189, 248, 0.1)',
+                            color: '#38BDF8',
+                            border: '1px solid rgba(56, 189, 248, 0.25)',
+                          }}
+                        >
+                          {resolved.role}
                         </span>
                       )}
 
-                      <span className={`status-pill ${col.status}`} style={{ fontSize: '10px', padding: '2px 8px' }}>
-                        {col.status}
-                      </span>
+                      {/* Quick copy email */}
+                      {resolved.email && (
+                        <button
+                          type="button"
+                          onClick={(e) => copyToClipboard(resolved.email, e)}
+                          title="Copy target email address"
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: copiedEmail === resolved.email ? '#10B981' : '#64748B',
+                            cursor: 'pointer',
+                            padding: '3px',
+                          }}
+                        >
+                          {copiedEmail === resolved.email ? <Check size={13} /> : <Copy size={13} />}
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -910,16 +1171,16 @@ export default function CampaignsPage() {
           </div>
 
           {/* Pagination when in all_filtered mode */}
-          {viewMode === 'all_filtered' && filteredColleges.length > listPageSize && (
+          {viewMode === 'all_filtered' && colleges.length > listPageSize && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginTop: '4px' }}>
               <span style={{ color: '#94A3B8' }}>
-                Page {listPage} of {Math.ceil(filteredColleges.length / listPageSize)}
+                Page {listPage} of {Math.ceil(colleges.length / listPageSize)}
               </span>
               <div style={{ display: 'flex', gap: '6px' }}>
                 <button
                   type="button"
                   disabled={listPage === 1}
-                  onClick={() => setListPage(p => p - 1)}
+                  onClick={() => setListPage((p) => p - 1)}
                   className="btn btn-secondary btn-sm"
                   style={{ padding: '3px 8px', fontSize: '11px' }}
                 >
@@ -927,8 +1188,8 @@ export default function CampaignsPage() {
                 </button>
                 <button
                   type="button"
-                  disabled={listPage >= Math.ceil(filteredColleges.length / listPageSize)}
-                  onClick={() => setListPage(p => p + 1)}
+                  disabled={listPage >= Math.ceil(colleges.length / listPageSize)}
+                  onClick={() => setListPage((p) => p + 1)}
                   className="btn btn-secondary btn-sm"
                   style={{ padding: '3px 8px', fontSize: '11px' }}
                 >
@@ -937,26 +1198,24 @@ export default function CampaignsPage() {
               </div>
             </div>
           )}
-
         </div>
 
-        {/* ================= COLUMN 2: EMAIL SETTINGS & SEND ================= */}
+        {/* ================= COLUMN 2: EMAIL SETTINGS & DISPATCH ================= */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '18px 20px' }}>
-          
           <div className="card-header" style={{ marginBottom: '4px', paddingBottom: '10px', borderBottom: '1px solid var(--border-subtle)' }}>
             <div>
               <div className="card-title" style={{ fontSize: '16px' }}>
                 <Sliders size={18} color="#FF324B" />
-                <span>Email Settings &amp; Send</span>
+                <span>Campaign Configuration</span>
               </div>
               <div className="card-subtitle">
-                Choose template, sender name, and delivery speed
+                Choose outreach template, sender identity, and delivery rate
               </div>
             </div>
           </div>
 
           {/* Template Selection */}
-          <div className="form-group" style={{ marginBottom: '10px' }}>
+          <div className="form-group" style={{ marginBottom: '8px' }}>
             <label className="form-label">
               Choose Email Template <span className="required">*</span>
             </label>
@@ -974,7 +1233,7 @@ export default function CampaignsPage() {
           </div>
 
           {/* Sender Identity */}
-          <div className="form-group" style={{ marginBottom: '10px' }}>
+          <div className="form-group" style={{ marginBottom: '8px' }}>
             <label className="form-label">
               Sender Name (From Name)
             </label>
@@ -988,7 +1247,7 @@ export default function CampaignsPage() {
           </div>
 
           {/* Throttle Delay Control */}
-          <div className="form-group" style={{ marginBottom: '10px' }}>
+          <div className="form-group" style={{ marginBottom: '8px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
               <label className="form-label" style={{ margin: 0 }}>
                 Delay Between Emails (Anti-Spam)
@@ -1008,23 +1267,25 @@ export default function CampaignsPage() {
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#64748B', marginTop: '2px' }}>
               <span>Fast (0.5s)</span>
-              <span style={{ color: '#10B981' }}>Recommended Safe (1.5s - 2.0s)</span>
+              <span style={{ color: '#10B981' }}>Safe (1.5s - 2.0s)</span>
               <span>Extra Safe (5.0s)</span>
             </div>
           </div>
 
-          {/* Safeguard: Duplicate Protection */}
-          <div style={{ 
-            background: 'rgba(7, 9, 14, 0.7)', 
-            padding: '12px 14px', 
-            borderRadius: '8px', 
-            border: '1px solid var(--border-subtle)' 
-          }}>
+          {/* Duplicate Protection Safeguard */}
+          <div
+            style={{
+              background: 'rgba(7, 9, 14, 0.7)',
+              padding: '12px 14px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-subtle)',
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <ShieldCheck size={16} color="#10B981" />
                 <span style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF' }}>
-                  Duplicate Email Protection
+                  Duplicate Outreach Protection
                 </span>
               </div>
               <input
@@ -1039,12 +1300,12 @@ export default function CampaignsPage() {
               {bypassDuplicateCheck ? (
                 <span style={{ color: '#F59E0B' }}>⚠️ Protection off: Will re-send to previously contacted colleges.</span>
               ) : (
-                <span style={{ color: '#10B981' }}>✓ Protected: Automatically skips colleges emailed in the last 30 days.</span>
+                <span style={{ color: '#10B981' }}>✓ Protected: Skips institutions emailed within the last 30 days.</span>
               )}
             </p>
           </div>
 
-          {/* Custom Subject & Body Editor Toggle */}
+          {/* Preview or Custom Subject & Body Editor Toggle */}
           <div>
             <button
               type="button"
@@ -1059,17 +1320,17 @@ export default function CampaignsPage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '5px',
-                padding: 0
+                padding: 0,
               }}
             >
               <FileText size={13} />
-              <span>{showCustomizeContent ? 'Hide Custom Email Editor' : 'Preview or Edit Email Content Before Sending'}</span>
+              <span>{showCustomizeContent ? 'Hide Email Preview & Editor' : 'Preview or Customize Email Content'}</span>
             </button>
 
             {showCustomizeContent && (
               <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div>
-                  <label className="form-label" style={{ fontSize: '11px' }}>Custom Subject Line</label>
+                  <label className="form-label" style={{ fontSize: '11px' }}>Subject Line</label>
                   <input
                     type="text"
                     value={customSubject}
@@ -1079,7 +1340,7 @@ export default function CampaignsPage() {
                   />
                 </div>
                 <div>
-                  <label className="form-label" style={{ fontSize: '11px' }}>Custom Email Body</label>
+                  <label className="form-label" style={{ fontSize: '11px' }}>Email Body</label>
                   <textarea
                     rows={6}
                     value={customBody}
@@ -1089,35 +1350,69 @@ export default function CampaignsPage() {
                   />
                 </div>
                 <div style={{ fontSize: '10px', color: '#64748B' }}>
-                  Supported tokens: <code>{"{{college_name}}"}</code>, <code>{"{{city}}"}</code>, <code>{"{{contact_person}}"}</code>, <code>{"{{department}}"}</code>
+                  Tokens: <code>{"[College Name]"}</code>, <code>{"[State]"}</code>, <code>{"[District]"}</code>, <code>{"[Recipient Name]"}</code>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Live Progress Bar during active send */}
+          {/* Live Progress Bar during active dispatch */}
           {isSending && (
-            <div style={{
-              background: 'rgba(255, 50, 75, 0.08)',
-              border: '1px solid rgba(255, 50, 75, 0.3)',
-              borderRadius: '8px',
-              padding: '12px 14px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px'
-            }}>
+            <div
+              style={{
+                background: 'rgba(255, 50, 75, 0.08)',
+                border: '1px solid rgba(255, 50, 75, 0.3)',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <RefreshCw size={13} className="spin" color="#FF324B" /> Sending Emails...
+                <span
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: '#FFFFFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <RefreshCw size={13} className="spin" color="#FF324B" /> Dispatching Batch...
                 </span>
                 <span style={{ fontSize: '12px', fontWeight: 800, color: '#FF324B', fontFamily: 'monospace' }}>
                   {progressPercent}%
                 </span>
               </div>
-              <div style={{ width: '100%', height: '6px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${progressPercent}%`, height: '100%', background: '#FF324B', transition: 'width 0.2s ease' }} />
+              <div
+                style={{
+                  width: '100%',
+                  height: '6px',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: '3px',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    width: `${progressPercent}%`,
+                    height: '100%',
+                    background: '#FF324B',
+                    transition: 'width 0.2s ease',
+                  }}
+                />
               </div>
-              <div style={{ fontSize: '11px', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div
+                style={{
+                  fontSize: '11px',
+                  color: '#94A3B8',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
                 {currentProgressText}
               </div>
             </div>
@@ -1125,19 +1420,27 @@ export default function CampaignsPage() {
 
           {/* Final Campaign Results Card */}
           {campaignResults && !isSending && (
-            <div style={{
-              background: 'rgba(16, 185, 129, 0.08)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              borderRadius: '8px',
-              padding: '12px 14px'
-            }}>
+            <div
+              style={{
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: '8px',
+                padding: '12px 14px',
+              }}
+            >
               <div style={{ fontSize: '12px', fontWeight: 700, color: '#10B981', marginBottom: '4px' }}>
-                ✓ Emails Successfully Sent
+                ✓ Campaign Batch Dispatched
               </div>
               <div style={{ fontSize: '11px', color: '#CBD5E1', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <span>Delivered: <strong style={{ color: '#10B981' }}>{campaignResults.summary.sent}</strong></span>
-                <span>Skipped (Already Contacted): <strong style={{ color: '#F59E0B' }}>{campaignResults.summary.skippedDuplicates}</strong></span>
-                <span>Failed: <strong style={{ color: '#EF4444' }}>{campaignResults.summary.failed}</strong></span>
+                <span>
+                  Delivered: <strong style={{ color: '#10B981' }}>{campaignResults.summary.sent}</strong>
+                </span>
+                <span>
+                  Skipped Duplicates: <strong style={{ color: '#F59E0B' }}>{campaignResults.summary.skippedDuplicates}</strong>
+                </span>
+                <span>
+                  Failed: <strong style={{ color: '#EF4444' }}>{campaignResults.summary.failed}</strong>
+                </span>
               </div>
             </div>
           )}
@@ -1157,26 +1460,26 @@ export default function CampaignsPage() {
               justifyContent: 'center',
               gap: '10px',
               marginTop: 'auto',
-              boxShadow: selectedIds.size > 0 ? '0 4px 20px rgba(255, 50, 75, 0.35)' : 'none'
+              boxShadow: selectedIds.size > 0 ? '0 4px 20px rgba(255, 50, 75, 0.35)' : 'none',
             }}
           >
             {isSending ? (
               <>
                 <RefreshCw size={16} className="spin" />
-                <span>Sending Emails ({progressPercent}%)...</span>
+                <span>Sending Batch ({progressPercent}%)...</span>
               </>
             ) : (
               <>
                 <Send size={16} />
-                <span>Send Emails to {selectedIds.size} Selected Colleges</span>
+                <span>
+                  Send Emails to {selectedIds.size} Selected Colleges
+                  {batches.length > 0 && ` (Batch #${activeBatchIndex + 1})`}
+                </span>
               </>
             )}
           </button>
-
         </div>
-
       </div>
-
     </div>
   );
 }

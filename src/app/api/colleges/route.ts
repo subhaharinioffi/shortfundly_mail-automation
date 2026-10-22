@@ -12,8 +12,18 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get('role') || '';
     const search = searchParams.get('search') || '';
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 100);
-    const offset = (page - 1) * limit;
+    const rawLimit = searchParams.get('limit');
+    let limit = 50;
+    let offset = 0;
+    if (rawLimit === 'all') {
+      limit = 5000;
+      offset = 0;
+    } else if (rawLimit) {
+      limit = Math.min(Math.max(1, parseInt(rawLimit, 10) || 50), 5000);
+      offset = (page - 1) * limit;
+    } else {
+      offset = (page - 1) * limit;
+    }
 
     const where: any = {};
 
