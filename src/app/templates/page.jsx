@@ -131,12 +131,8 @@ export default function TemplatesPage() {
   };
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    } else if (status === 'authenticated') {
-      fetchTemplates();
-    }
-  }, [status]);
+    fetchTemplates();
+  }, []);
 
   // Insert token into textarea at cursor or end
   const insertToken = (token) => {

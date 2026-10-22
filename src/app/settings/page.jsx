@@ -58,12 +58,8 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    } else if (status === 'authenticated') {
-      fetchSettings();
-    }
-  }, [status]);
+    fetchSettings();
+  }, []);
 
   // Save Settings
   const handleSave = async (e) => {

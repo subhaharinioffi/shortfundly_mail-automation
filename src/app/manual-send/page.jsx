@@ -100,15 +100,11 @@ function ManualSendContent() {
   };
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    } else if (status === 'authenticated') {
-      if (session?.user?.name) {
-        setSenderName(session.user.name);
-      }
-      loadDefaultTemplate();
+    loadDefaultTemplate();
+    if (session?.user?.name) {
+      setSenderName(session.user.name);
     }
-  }, [status]);
+  }, [session]);
 
   // Handle Send
   const handleSend = async (e) => {

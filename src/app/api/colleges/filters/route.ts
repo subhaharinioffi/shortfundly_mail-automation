@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     // Fetch distinct districts (optionally filtered by selected state)
     const districtWhere: any = {};
     if (selectedState && selectedState !== 'all') {
-      districtWhere.state = selectedState;
+      districtWhere.state = { equals: selectedState, mode: 'insensitive' };
     }
 
     const districtsResult = await prisma.college.findMany({

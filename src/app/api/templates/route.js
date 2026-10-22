@@ -3,16 +3,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const db = getDb();
     const templates = db.prepare('SELECT * FROM email_templates ORDER BY is_default DESC, id DESC').all();
-
     return NextResponse.json({ templates });
   } catch (error) {
     return NextResponse.json({ error: error.message || 'Failed to fetch templates' }, { status: 500 });
@@ -22,10 +18,6 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await req.json();
     const { name, subject, body: content, is_default, category } = body;
 
@@ -50,7 +42,7 @@ export async function POST(req) {
       content.trim(),
       is_default ? 1 : 0,
       category?.trim() || 'General',
-      session.user?.name || 'Authorized User'
+      session?.user?.name || 'Administrator'
     );
 
     const created = db.prepare('SELECT * FROM email_templates WHERE id = ?').get(result.lastInsertRowid);
@@ -63,11 +55,6 @@ export async function POST(req) {
 
 export async function PUT(req) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await req.json();
     const { id, name, subject, body: content, is_default, category } = body;
 
@@ -104,11 +91,6 @@ export async function PUT(req) {
 
 export async function DELETE(req) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 

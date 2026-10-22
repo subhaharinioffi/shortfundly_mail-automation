@@ -7,9 +7,6 @@ import { sendEmailMessage } from '@/lib/mailer';
 export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     const payload = await req.json();
     const {

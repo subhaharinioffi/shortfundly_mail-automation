@@ -4,13 +4,10 @@ import { authOptions } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 import { getSmtpSettings, verifySmtp } from '@/lib/mailer';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const settings = getSmtpSettings();
     // Mask password for security
     const maskedSettings = {
@@ -21,17 +18,12 @@ export async function GET(req) {
 
     return NextResponse.json({ settings: maskedSettings });
   } catch (error) {
-    return NextResponse.json({ error: error.message || 'Failed to fetch settings' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to fetch settings' }, { status: 500 });
   }
 }
 
 export async function POST(req) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await req.json();
     const { action } = body;
 
@@ -60,21 +52,34 @@ export async function POST(req) {
       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
     `);
 
-    const fields = ['smtp_host', 'smtp_port', 'smtp_secure', 'smtp_user', 'from_name', 'from_email', 'duplicate_cooldown_days'];
+    const current = getSmtpSettings();
+    const keys = [
+      'smtp_host',
+      'smtp_port',
+      'smtp_secure',
+      'smtp_user',
+      'from_name',
+      'from_email',
+      'duplicate_cooldown_days',
+    ];
 
-    for (const f of fields) {
-      if (body[f] !== undefined) {
-        updateStmt.run(f, String(body[f]));
+    const saveTx = db.transaction(() => {
+      for (const k of keys) {
+        if (body[k] !== undefined) {
+          updateStmt.run(k, String(body[k]));
+        }
       }
-    }
 
-    // Update password only if provided and not masked
-    if (body.smtp_pass && body.smtp_pass !== '••••••••••••••••') {
-      updateStmt.run('smtp_pass', body.smtp_pass.trim());
-    }
+      // Only update password if a new non-empty, non-masked password is provided
+      if (body.smtp_pass && body.smtp_pass !== '••••••••••••••••') {
+        updateStmt.run('smtp_pass', body.smtp_pass);
+      }
+    });
 
-    return NextResponse.json({ success: true, message: 'Settings saved successfully.' });
+    saveTx();
+
+    return NextResponse.json({ success: true, message: 'Settings saved successfully' });
   } catch (error) {
-    return NextResponse.json({ error: error.message || 'Failed to save settings' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to update settings' }, { status: 500 });
   }
 }

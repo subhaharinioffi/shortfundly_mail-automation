@@ -16,7 +16,8 @@ import {
   CheckCircle2,
   Clock,
   Filter,
-  ArrowRight
+  ArrowRight,
+  Send
 } from 'lucide-react';
 
 export default function CollegeDirectoryPage() {
@@ -339,12 +340,12 @@ export default function CollegeDirectoryPage() {
         <table className="data-table">
           <thead>
             <tr>
-              <th style={{ width: '26%' }}>College Name</th>
-              <th style={{ width: '15%' }}>Location (State, District)</th>
+              <th style={{ width: '25%' }}>College Name</th>
+              <th style={{ width: '14%' }}>Location (State, District)</th>
               <th style={{ width: '13%' }}>Official Website</th>
               <th style={{ width: '14%' }}>Official Email</th>
-              <th style={{ width: '22%' }}>Staff Contacts</th>
-              <th style={{ width: '5%' }}>Source</th>
+              <th style={{ width: '20%' }}>Staff Contacts</th>
+              <th style={{ width: '9%', textAlign: 'center' }}>Send Mail</th>
               <th style={{ width: '5%' }}>Status</th>
             </tr>
           </thead>
@@ -483,11 +484,17 @@ export default function CollegeDirectoryPage() {
                       )}
                     </td>
 
-                    {/* Source */}
-                    <td>
-                      <span className="portal-badge">
-                        {col.portalSource || 'AISHE'}
-                      </span>
+                    {/* Send Mail CTA Button */}
+                    <td style={{ textAlign: 'center' }}>
+                      <Link 
+                        href={`/manual-send?name=${encodeURIComponent(col.collegeName)}&email=${encodeURIComponent(col.officialEmail || (col.contacts && col.contacts[0] ? col.contacts[0].email : ''))}&city=${encodeURIComponent(col.district)}&web=${encodeURIComponent(col.officialWebsite || '')}`}
+                        className="btn btn-primary btn-sm"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', padding: '6px 12px', fontSize: '12px' }}
+                        title={`Send outreach email to ${col.collegeName}`}
+                      >
+                        <Send size={12} />
+                        <span>Send Mail</span>
+                      </Link>
                     </td>
 
                     {/* Status */}

@@ -7,6 +7,11 @@ import { useSession, signOut } from 'next-auth/react';
 import { 
   GraduationCap, 
   ClipboardCheck, 
+  FileText,
+  Settings as SettingsIcon,
+  PenTool,
+  Send,
+  Activity,
   LayoutDashboard,
   LogOut, 
   LogIn
@@ -43,17 +48,19 @@ export default function Navbar() {
     };
   }, [pathname]);
 
-  const primaryNavItems = [
-    { label: 'College Directory', href: '/colleges', icon: GraduationCap },
+  const navItems = [
+    { label: 'Directory', href: '/colleges', icon: GraduationCap },
     { 
-      label: 'Review Changes & Approvals', 
+      label: 'Approvals', 
       href: '/approvals', 
       icon: ClipboardCheck,
       badge: pendingCount 
     },
-  ];
-
-  const secondaryNavItems = [
+    { label: 'Templates', href: '/templates', icon: FileText },
+    { label: 'Settings', href: '/settings', icon: SettingsIcon },
+    { label: 'Direct Send', href: '/manual-send', icon: PenTool },
+    { label: 'Campaigns', href: '/campaigns', icon: Send },
+    { label: 'Logs', href: '/logs', icon: Activity },
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   ];
 
@@ -83,15 +90,15 @@ export default function Navbar() {
                 Shortfundly Campus
               </span>
               <span style={{ fontSize: '11px', color: '#94A3B8', whiteSpace: 'nowrap' }}>
-                College Outreach & Data Pipeline
+                Outreach & Data Pipeline
               </span>
             </div>
           </Link>
 
-          {/* Primary Two-Tab Navigation Bar */}
+          {/* Navigation Bar Links */}
           <nav className="nav-container-desktop" style={{ flexShrink: 0, overflowX: 'auto' }}>
-            <ul className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: 0, padding: 0, listStyle: 'none', flexWrap: 'nowrap' }}>
-              {primaryNavItems.map((item) => {
+            <ul className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '4px', margin: 0, padding: 0, listStyle: 'none', flexWrap: 'nowrap' }}>
+              {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
                 return (
@@ -102,38 +109,20 @@ export default function Navbar() {
                       style={{ 
                         display: 'flex', 
                         alignItems: 'center', 
-                        gap: '8px', 
-                        padding: '8px 14px', 
-                        fontSize: '14px',
+                        gap: '6px', 
+                        padding: '7px 11px', 
+                        fontSize: '13.5px',
                         fontWeight: 600,
                         position: 'relative'
                       }}
                     >
-                      <Icon size={16} style={{ flexShrink: 0 }} />
+                      <Icon size={15} style={{ flexShrink: 0 }} />
                       <span>{item.label}</span>
                       {typeof item.badge === 'number' && item.badge > 0 && (
                         <span className="nav-badge" title={`${item.badge} pending review items`}>
                           {item.badge}
                         </span>
                       )}
-                    </Link>
-                  </li>
-                );
-              })}
-
-              {/* Optional Secondary Nav for logged in users */}
-              {session && secondaryNavItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
-                return (
-                  <li key={item.href} style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
-                    <Link 
-                      href={item.href} 
-                      className={`nav-item-link ${isActive ? 'active' : ''}`}
-                      style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', opacity: 0.8 }}
-                    >
-                      <Icon size={14} style={{ flexShrink: 0 }} />
-                      <span>{item.label}</span>
                     </Link>
                   </li>
                 );
