@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model College {
+  id              String          @id @default(uuid())
+  country         String          @default("India")
+  state           String
+  district        String
+  collegeName     String
+  portalSource    String          // e.g., 'AISHE', 'AICTE', 'UGC', 'NMC', 'PCI', 'INC', 'NIRF'
+  officialWebsite String?
+  officialEmail   String?
+  contactNumber   String?
+  lastCrawledAt   DateTime?
+  contentHash     String?         // SHA-256 hash of contact text for quick change checks
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  contacts        StaffContact[]
+  changeRequests  ChangeRequest[]
+
+  @@unique([collegeName, state, district])
+  @@index([state])
+  @@index([district])
+}
+
+model StaffContact {
+  id          String   @id @default(uuid())
+  collegeId   String
+  college     College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  role        String   // 'Principal', 'Dean', 'Head of Department (HOD)', 'Registrar', 'Placement Officer'
+  department  String?  // 'Computer Science', 'Mechanical Engineering'
+  personName  String?
+  email       String
+  sourceUrl   String?
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([collegeId, role, email])
+}
+
+model ChangeRequest {
+  id           String    @id @default(uuid())
+  collegeId    String
+  college      College   @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  changeType   String    // 'NEW_COLLEGE_FOUND', 'OFFICIAL_EMAIL_CHANGED', 'STAFF_EMAIL_CHANGED', 'NEW_STAFF_FOUND', 'WEBSITE_CHANGED'
+  targetEntity String    // 'COLLEGE' or 'STAFF'
+  staffRole    String?
+  fieldName    String
+  oldValue     String?
+  newValue     String
+  sourceUrl    String?
+  status       String    @default("PENDING") // 'PENDING', 'APPROVED', 'REJECTED'
+  detectedAt   DateTime  @default(now())
+  reviewedAt   DateTime?
+  reviewedBy   String?
+
+  @@index([status])
+}

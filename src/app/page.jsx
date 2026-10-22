@@ -114,33 +114,14 @@ export default function LandingPage() {
 
         {/* Action CTAs */}
         <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '44px' }}>
-          {session ? (
-            <>
-              <Link href="/dashboard" className="btn btn-primary btn-lg">
-                <PlayCinemaIcon size={15} color="#FFFFFF" />
-                <span>Open Operations Dashboard</span>
-              </Link>
-              <Link href="/campaigns" className="btn btn-secondary btn-lg">
-                <Send size={15} />
-                <span>Automated Batch Send</span>
-              </Link>
-              <Link href="/manual-send" className="btn btn-outline btn-lg">
-                <PenTool size={15} />
-                <span>Custom Manual Mailer</span>
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link href="/login" className="btn btn-primary btn-lg">
-                <ShieldCheck size={18} />
-                <span>Sign In to Access Automation</span>
-              </Link>
-              <Link href="/login" className="btn btn-secondary btn-lg">
-                <span>View Dashboard</span>
-                <ArrowRight size={16} />
-              </Link>
-            </>
-          )}
+          <Link href="/colleges" className="btn btn-primary btn-lg">
+            <GraduationCap size={18} />
+            <span>Explore College Directory</span>
+          </Link>
+          <Link href="/approvals" className="btn btn-secondary btn-lg">
+            <ShieldCheck size={18} />
+            <span>Review Pending Changes</span>
+          </Link>
         </div>
 
         {/* Minimalist 3-Pill Feature Bar */}

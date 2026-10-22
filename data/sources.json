@@ -1,0 +1,9 @@
+[
+  { "name": "AISHE", "url": "https://dashboard.aishe.gov.in/hedirectory/#/hedirectory" },
+  { "name": "AICTE", "url": "https://www.aicte-india.org/" },
+  { "name": "UGC", "url": "https://www.ugc.gov.in/universitydetails/" },
+  { "name": "NMC", "url": "https://nmc.org.in/" },
+  { "name": "PCI", "url": "https://www.pci.gov.in/en/" },
+  { "name": "INC", "url": "https://indiannursingcouncil.org/" },
+  { "name": "NIRF", "url": "https://www.nirfindia.org/" }
+]

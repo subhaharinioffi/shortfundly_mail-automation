@@ -1,16 +1,13 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { 
-  LayoutDashboard, 
   GraduationCap, 
-  FileText, 
-  Send, 
-  PenTool, 
-  Activity, 
-  Settings as SettingsIcon, 
+  ClipboardCheck, 
+  LayoutDashboard,
   LogOut, 
   LogIn
 } from 'lucide-react';
@@ -19,15 +16,45 @@ import RoleSwitcher from './RoleSwitcher';
 export default function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [pendingCount, setPendingCount] = useState(0);
 
-  const navItems = [
+  // Poll pending change requests count for the live badge
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPendingCount = async () => {
+      try {
+        const res = await fetch('/api/change-requests?status=PENDING');
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            setPendingCount(data.pendingCount || data.count || 0);
+          }
+        }
+      } catch (err) {
+        // Silently handle offline/loading errors
+      }
+    };
+
+    fetchPendingCount();
+    const interval = setInterval(fetchPendingCount, 15000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [pathname]);
+
+  const primaryNavItems = [
+    { label: 'College Directory', href: '/colleges', icon: GraduationCap },
+    { 
+      label: 'Review Changes & Approvals', 
+      href: '/approvals', 
+      icon: ClipboardCheck,
+      badge: pendingCount 
+    },
+  ];
+
+  const secondaryNavItems = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Directory', href: '/colleges', icon: GraduationCap },
-    { label: 'Templates', href: '/templates', icon: FileText },
-    { label: 'Campaigns', href: '/campaigns', icon: Send },
-    { label: 'Direct Send', href: '/manual-send', icon: PenTool },
-    { label: 'Logs', href: '/logs', icon: Activity },
-    { label: 'Settings', href: '/settings', icon: SettingsIcon },
   ];
 
   return (
@@ -36,8 +63,8 @@ export default function Navbar() {
       <header className="navbar-header">
         <div className="navbar-container">
           
-          {/* Brand Logo & Name: Clean single-line subtitle without wrapping */}
-          <Link href="/" className="brand-link" style={{ flexShrink: 0, textDecoration: 'none' }}>
+          {/* Brand Logo & Name */}
+          <Link href="/colleges" className="brand-link" style={{ flexShrink: 0, textDecoration: 'none' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src="/shortfundly-logo.png" 
@@ -53,39 +80,68 @@ export default function Navbar() {
             />
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
               <span style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.2px', whiteSpace: 'nowrap' }}>
-                Shortfundly
+                Shortfundly Campus
               </span>
-              <span className="text-xs text-slate-400 whitespace-nowrap" style={{ fontSize: '11px', color: '#94A3B8', whiteSpace: 'nowrap' }}>
-                Odisha Campus Outreach
+              <span style={{ fontSize: '11px', color: '#94A3B8', whiteSpace: 'nowrap' }}>
+                College Outreach & Data Pipeline
               </span>
             </div>
           </Link>
 
-          {/* Navigation Links: Forced single-line with whitespace-nowrap */}
-          {session && (
-            <nav className="nav-container-desktop" style={{ flexShrink: 0, overflowX: 'auto' }}>
-              <ul className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '4px', margin: 0, padding: 0, listStyle: 'none', flexWrap: 'nowrap' }}>
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = pathname === item.href;
-                  return (
-                    <li key={item.href} style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
-                      <Link 
-                        href={item.href} 
-                        className={`whitespace-nowrap text-sm font-medium px-3 py-2 rounded-lg nav-item-link ${isActive ? 'active' : ''}`}
-                        style={{ display: 'flex', alignItems: 'center', gap: '7px', whiteSpace: 'nowrap' }}
-                      >
-                        <Icon size={15} style={{ flexShrink: 0 }} />
-                        <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-          )}
+          {/* Primary Two-Tab Navigation Bar */}
+          <nav className="nav-container-desktop" style={{ flexShrink: 0, overflowX: 'auto' }}>
+            <ul className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: 0, padding: 0, listStyle: 'none', flexWrap: 'nowrap' }}>
+              {primaryNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <li key={item.href} style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
+                    <Link 
+                      href={item.href} 
+                      className={`nav-item-link ${isActive ? 'active' : ''}`}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px', 
+                        padding: '8px 14px', 
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        position: 'relative'
+                      }}
+                    >
+                      <Icon size={16} style={{ flexShrink: 0 }} />
+                      <span>{item.label}</span>
+                      {typeof item.badge === 'number' && item.badge > 0 && (
+                        <span className="nav-badge" title={`${item.badge} pending review items`}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
 
-          {/* Right Side: Interactive Role Switcher & User Profile */}
+              {/* Optional Secondary Nav for logged in users */}
+              {session && secondaryNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <li key={item.href} style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
+                    <Link 
+                      href={item.href} 
+                      className={`nav-item-link ${isActive ? 'active' : ''}`}
+                      style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', opacity: 0.8 }}
+                    >
+                      <Icon size={14} style={{ flexShrink: 0 }} />
+                      <span>{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          {/* Right Side: Role & User Info */}
           <div className="nav-user-panel" style={{ flexShrink: 0 }}>
             {session ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -94,7 +150,6 @@ export default function Navbar() {
                     <span style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF', whiteSpace: 'nowrap' }}>
                       {session.user.name}
                     </span>
-                    {/* Interactive Role Switcher replaces static Admin badge */}
                     <RoleSwitcher />
                   </div>
                   <span style={{ fontSize: '11px', color: '#64748B', whiteSpace: 'nowrap' }}>
