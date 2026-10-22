@@ -121,8 +121,8 @@ export function formatHtmlEmail(plainText, recipientEmail = '') {
   let safeText = escapeHtml(plainText);
 
   // Step 2: Convert markdown images FIRST before markdown links
-  // Syntax: ![Alt description](https://example.com/logo.png)
-  let html = safeText.replace(/!\[([^\]]*)\]\(((?:https?:\/\/|data:image\/)[^)]+)\)/gi, (match, alt, url) => {
+  // Syntax: ![Alt description](https://example.com/logo.png) or ![Alt](/api/upload?id=...)
+  let html = safeText.replace(/!\[([^\]]*)\]\(((?:https?:\/\/|data:image\/|\/api\/upload)[^)]+)\)/gi, (match, alt, url) => {
     const cleanAlt = alt ? alt.trim() : 'Shortfundly Visual';
     return `<div style="margin: 18px 0; text-align: center;"><img src="${url}" alt="${cleanAlt}" style="max-width: 100%; max-height: 280px; height: auto; border-radius: 8px; border: 1px solid #E2E8F0; display: inline-block; object-fit: contain; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" /></div>`;
   });
@@ -133,9 +133,12 @@ export function formatHtmlEmail(plainText, recipientEmail = '') {
     return `<div style="margin: 22px 0; text-align: center;"><a href="${url}" target="_blank" rel="noopener noreferrer" style="background: #FF324B; color: #ffffff !important; padding: 12px 26px; text-decoration: none; border-radius: 8px; font-weight: 700; display: inline-block; box-shadow: 0 4px 12px rgba(255,50,75,0.25); font-size: 14px; letter-spacing: 0.02em;">${label.trim()}</a></div>`;
   });
 
-  // Step 4: Convert markdown links (Brochure PDF, Website, Drive links)
-  // Syntax: [Link Label](https://...)
-  html = html.replace(/\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^)]+)\)/gi, (match, label, url) => {
+  // Step 4: Convert markdown links (Brochure PDF, Website, Drive links, Uploaded Files)
+  // Syntax: [Link Label](https://...) or [📎 Attached File.pdf](/api/upload?id=...)
+  html = html.replace(/\[([^\]]+)\]\(((?:https?:\/\/|mailto:|\/api\/upload)[^)]+)\)/gi, (match, label, url) => {
+    if (label.includes('📎') || url.includes('/api/upload')) {
+      return `<div style="margin: 12px 0;"><a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #FF324B; text-decoration: none; font-weight: 600; padding: 8px 14px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; display: inline-block; font-size: 13px;">${label}</a></div>`;
+    }
     return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #FF324B; text-decoration: underline; font-weight: 600;">${label}</a>`;
   });
 
@@ -277,7 +280,68 @@ To unsubscribe, reply with 'Unsubscribe'.`;
     }
 
     const transporter = createTransporter();
-    // Dispatch multipart email: rich HTML rendering for clients that support images/links + clean plain-text fallback
+
+    // Resolve any uploaded files (images & documents) referenced in proposal body
+    const attachments = [];
+    let processedHtml = htmlContent;
+
+    try {
+      const uploadMatches = [...(personalizedBody + ' ' + (htmlContent || '')).matchAll(/\/api\/upload\?id=([a-zA-Z0-9_-]+)/g)];
+      const matchedIds = Array.from(new Set(uploadMatches.map(m => m[1])));
+
+      if (matchedIds.length > 0) {
+        const placeholders = matchedIds.map(() => '?').join(',');
+        const records = db.prepare(`SELECT * FROM uploaded_files WHERE id IN (${placeholders})`).all(...matchedIds);
+
+        for (const rec of records) {
+          const isImg = rec.mime_type && rec.mime_type.startsWith('image/');
+          const fileBuffer = Buffer.from(rec.data_base64, 'base64');
+
+          if (isImg) {
+            // Attach as inline CID image for reliable display in Gmail / Outlook
+            const cid = `img_${rec.id}`;
+            attachments.push({
+              filename: rec.filename,
+              content: fileBuffer,
+              cid: cid,
+              contentType: rec.mime_type,
+            });
+
+            // Replace image URL in HTML with CID
+            if (processedHtml) {
+              const regex = new RegExp(`(?:"|')\\/api\\/upload\\?id=${rec.id}[^"']*(?:"|')`, 'g');
+              processedHtml = processedHtml.replace(regex, `"cid:${cid}"`);
+            }
+          } else {
+            // Attach as real email attachment (PDF, DOCX, XLSX, etc.)
+            attachments.push({
+              filename: rec.filename,
+              content: fileBuffer,
+              contentType: rec.mime_type,
+            });
+          }
+        }
+      }
+
+      // Also handle any raw data:image/...;base64 URLs in HTML by turning them into inline CID attachments
+      if (processedHtml) {
+        let rawImgCount = 1;
+        processedHtml = processedHtml.replace(/<img([^>]+)src=["']data:image\/([a-zA-Z0-9+]+);base64,([^"']+)["']([^>]*)>/gi, (match, prefix, ext, base64Data, suffix) => {
+          const cid = `inline_img_${Date.now()}_${rawImgCount++}`;
+          attachments.push({
+            filename: `inline_image_${rawImgCount}.${ext}`,
+            content: Buffer.from(base64Data, 'base64'),
+            cid: cid,
+            contentType: `image/${ext}`,
+          });
+          return `<img${prefix}src="cid:${cid}"${suffix}>`;
+        });
+      }
+    } catch (attachErr) {
+      console.warn('Error resolving attachments in mailer:', attachErr.message);
+    }
+
+    // Dispatch multipart email: rich HTML rendering with CID images + attachments + clean plain-text fallback
     const mailOptions = {
       from: `"${senderDisplayName}" <${fromAddress}>`,
       replyTo: `"${senderDisplayName}" <${replyToAddress}>`,
@@ -285,9 +349,14 @@ To unsubscribe, reply with 'Unsubscribe'.`;
       subject: personalizedSubject,
       text: plainTextWithFooter,
     };
-    if (htmlContent) {
-      mailOptions.html = htmlContent;
+
+    if (processedHtml) {
+      mailOptions.html = processedHtml;
     }
+    if (attachments.length > 0) {
+      mailOptions.attachments = attachments;
+    }
+
     const info = await transporter.sendMail(mailOptions);
 
     // 5. Log Success

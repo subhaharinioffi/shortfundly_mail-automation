@@ -120,6 +120,20 @@ function ensureSchema(db) {
     );
   `);
 
+  // 6. Uploaded Files & Media Table (Supports Images, PDFs, Documents uploaded via File Explorer)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS uploaded_files (
+      id TEXT PRIMARY KEY,
+      filename TEXT NOT NULL,
+      mime_type TEXT NOT NULL,
+      size_bytes INTEGER NOT NULL,
+      data_base64 TEXT NOT NULL,
+      uploaded_by TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_uploaded_files_created ON uploaded_files(created_at);
+  `);
+
   // Seed default 3 team users if empty
   const userCount = db.prepare('SELECT count(*) as count FROM users').get();
   if (!userCount || userCount.count === 0) {

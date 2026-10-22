@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -10,11 +10,9 @@ import {
   Plus, 
   Trash2, 
   Eye, 
-  Code, 
   Sparkles, 
   CheckCircle2, 
   AlertCircle, 
-  Copy, 
   RefreshCw, 
   Send,
   Layers,
@@ -22,11 +20,13 @@ import {
   Image as ImageIcon,
   Link2,
   MousePointerClick,
-  FileCheck,
   Check,
+  Upload,
+  Paperclip,
+  File,
+  Download,
   ExternalLink
 } from 'lucide-react';
-import { FilmstripIcon, ClapperboardIcon } from '@/components/Icons';
 
 export default function TemplatesPage() {
   const { data: session, status } = useSession();
@@ -45,14 +45,19 @@ export default function TemplatesPage() {
   const [category, setCategory] = useState('Campus Outreach');
   const [isDefault, setIsDefault] = useState(false);
 
-  // Media Insertion Modal State
-  const [activeModal, setActiveModal] = useState(null); // 'image' | 'link' | 'button' | null
-  const [modalImgUrl, setModalImgUrl] = useState('');
-  const [modalImgAlt, setModalImgAlt] = useState('');
-  const [modalLinkText, setModalLinkText] = useState('');
-  const [modalLinkUrl, setModalLinkUrl] = useState('');
-  const [modalBtnText, setModalBtnText] = useState('');
-  const [modalBtnUrl, setModalBtnUrl] = useState('');
+  // File Explorer Upload State
+  const fileInputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadedSessionFiles, setUploadedSessionFiles] = useState([]);
+
+  // Custom User/Admin Modals (Zero default presets)
+  const [activeModal, setActiveModal] = useState(null); // 'image_url' | 'link' | 'button' | null
+  const [customImgUrl, setCustomImgUrl] = useState('');
+  const [customImgAlt, setCustomImgAlt] = useState('');
+  const [customLinkText, setCustomLinkText] = useState('');
+  const [customLinkUrl, setCustomLinkUrl] = useState('');
+  const [customBtnText, setCustomBtnText] = useState('');
+  const [customBtnUrl, setCustomBtnUrl] = useState('');
 
   // Preview state
   const [previewTab, setPreviewTab] = useState('rich'); // 'rich' | 'plain'
@@ -76,25 +81,13 @@ export default function TemplatesPage() {
     { label: '[Your Role]', token: '[Your Role]' },
   ];
 
-  // Quick Preset Sources & Media
-  const imagePresets = [
-    { label: '🎬 Shortfundly Logo', url: 'https://campus.shortfundly.com/images/shortfundly-logo.png', alt: 'Shortfundly Campus' },
-    { label: '🎓 Campus Fest Banner', url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop&q=80', alt: 'Campus Film Festival Collaboration' },
-    { label: '🎥 Workshop Poster', url: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&auto=format&fit=crop&q=80', alt: 'Creative Filmmaking & AI Workshop' },
-  ];
-
-  const linkPresets = [
-    { label: '📄 Campus Pitch Deck (PDF)', url: 'https://campus.shortfundly.com/docs/Shortfundly-Campus-Deck.pdf', text: 'Download Shortfundly Campus Pitch Deck (PDF)' },
-    { label: '🌐 Shortfundly Portal', url: 'https://campus.shortfundly.com', text: 'Visit Shortfundly Campus Portal' },
-    { label: '📜 Official MoU Draft', url: 'https://campus.shortfundly.com/mou-template', text: 'Review Institutional MoU Draft' },
-    { label: '🏛️ Odisha DHE Reference', url: 'https://dhe.odisha.gov.in', text: 'Department of Higher Education Odisha' },
-  ];
-
-  const buttonPresets = [
-    { label: '📅 Schedule Meeting', url: 'https://calendly.com/shortfundly-meeting/30min', text: 'Schedule 30-Min Campus Presentation' },
-    { label: '🚀 Explore Campus Pass', url: 'https://campus.shortfundly.com/', text: 'Explore Shortfundly Campus Pass' },
-    { label: '🤝 Confirm Interest', url: 'https://campus.shortfundly.com/partner', text: 'Confirm Partnership & Schedule Demo' },
-  ];
+  const formatFileSize = (bytes) => {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
 
   const fetchTemplates = async () => {
     setLoading(true);
@@ -150,35 +143,99 @@ export default function TemplatesPage() {
     setBody((prev) => prev + ' ' + token);
   };
 
-  // Insert media/source snippets
-  const handleInsertImage = (url, alt) => {
-    if (!url) return;
-    const cleanAlt = alt || 'Shortfundly Visual';
-    setBody((prev) => prev + `\n\n![${cleanAlt}](${url})\n\n`);
-    setActiveModal(null);
-    setModalImgUrl('');
-    setModalImgAlt('');
-    setAlert({ type: 'success', message: 'Image inserted into proposal body.' });
+  // Trigger Native File Explorer
+  const handleOpenFileExplorer = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
-  const handleInsertLink = (text, url) => {
-    if (!url) return;
-    const cleanText = text || 'Resource Link';
-    setBody((prev) => prev + ` [${cleanText}](${url}) `);
-    setActiveModal(null);
-    setModalLinkText('');
-    setModalLinkUrl('');
-    setAlert({ type: 'success', message: 'Resource link inserted into proposal body.' });
+  // Handle File Upload from File Explorer (Images, PDFs, Documents, Spreadsheets)
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setAlert(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to upload file');
+      }
+
+      const uploaded = data.file;
+      setUploadedSessionFiles(prev => [uploaded, ...prev]);
+
+      if (uploaded.isImage) {
+        // Insert clean image markdown pointing to the uploaded file
+        const imgMarkdown = `\n\n![${uploaded.filename}](${uploaded.url})\n\n`;
+        setBody(prev => prev + imgMarkdown);
+        setAlert({ 
+          type: 'success', 
+          message: `Image "${uploaded.filename}" (${formatFileSize(uploaded.size)}) uploaded from your computer and added to proposal.` 
+        });
+      } else {
+        // Insert document attachment markdown pointing to the uploaded file
+        const docMarkdown = `\n\n[📎 Attached Document: ${uploaded.filename} (${formatFileSize(uploaded.size)})](${uploaded.url})\n\n`;
+        setBody(prev => prev + docMarkdown);
+        setAlert({ 
+          type: 'success', 
+          message: `File "${uploaded.filename}" (${formatFileSize(uploaded.size)}) uploaded from your computer and attached to proposal.` 
+        });
+      }
+    } catch (err) {
+      setAlert({ type: 'danger', message: `Upload failed: ${err.message}` });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
-  const handleInsertButton = (text, url) => {
-    if (!url) return;
-    const cleanText = text || 'Explore Opportunity';
-    setBody((prev) => prev + `\n\n[button:${cleanText}](${url})\n\n`);
+  // Insert Image via custom user URL
+  const handleInsertCustomImage = (e) => {
+    e?.preventDefault();
+    if (!customImgUrl) return;
+    const cleanAlt = customImgAlt ? customImgAlt.trim() : 'Proposal Visual';
+    setBody((prev) => prev + `\n\n![${cleanAlt}](${customImgUrl.trim()})\n\n`);
     setActiveModal(null);
-    setModalBtnText('');
-    setModalBtnUrl('');
-    setAlert({ type: 'success', message: 'Action CTA button inserted into proposal body.' });
+    setCustomImgUrl('');
+    setCustomImgAlt('');
+    setAlert({ type: 'success', message: 'Image link added to proposal body.' });
+  };
+
+  // Insert Custom Link / Document source
+  const handleInsertCustomLink = (e) => {
+    e?.preventDefault();
+    if (!customLinkUrl) return;
+    const cleanText = customLinkText ? customLinkText.trim() : 'Resource Link';
+    setBody((prev) => prev + ` [${cleanText}](${customLinkUrl.trim()}) `);
+    setActiveModal(null);
+    setCustomLinkText('');
+    setCustomLinkUrl('');
+    setAlert({ type: 'success', message: 'Resource link added to proposal body.' });
+  };
+
+  // Insert Custom CTA Button
+  const handleInsertCustomButton = (e) => {
+    e?.preventDefault();
+    if (!customBtnUrl) return;
+    const cleanText = customBtnText ? customBtnText.trim() : 'Take Action';
+    setBody((prev) => prev + `\n\n[button:${cleanText}](${customBtnUrl.trim()})\n\n`);
+    setActiveModal(null);
+    setCustomBtnText('');
+    setCustomBtnUrl('');
+    setAlert({ type: 'success', message: 'Action button added to proposal body.' });
   };
 
   // Save changes to current template or create new
@@ -223,15 +280,15 @@ export default function TemplatesPage() {
     }
   };
 
-  // Handle New Template
+  // Handle New Template (Clean, zero default presets)
   const handleCreateNew = () => {
     setSelectedTemplateId(null);
     setName('New Odisha Outreach Proposal');
     setSubject('PROPOSAL FOR SHORTFUNDLY CAMPUS COLLABORATION - [College Name]');
-    setBody('Dear Sir/Madam,\n\nGreetings from Shortfundly!\n\nWe propose a collaboration with [College Name] through Shortfundly Campus to empower student filmmakers and digital creators.\n\n![Shortfundly Campus](https://campus.shortfundly.com/images/shortfundly-logo.png)\n\n[button:Schedule Campus Demo](https://calendly.com/shortfundly-meeting/30min)\n\nWarm regards,\n[Your Name]\n[Your Role]');
+    setBody('Dear Sir/Madam,\n\nGreetings from Shortfundly!\n\nWe propose an educational collaboration with [College Name] through Shortfundly Campus to help students develop creative skills, showcase their work, and explore opportunities in filmmaking and digital content.\n\nWarm regards,\n[Your Name]\n[Your Role]');
     setCategory('Campus Outreach');
     setIsDefault(false);
-    setAlert({ type: 'info', message: 'Drafting new template. Click "Save Template" when ready.' });
+    setAlert({ type: 'info', message: 'Drafting new template. Use "Upload Image / File" to add your media or documents from your computer.' });
   };
 
   // Handle Delete Template
@@ -279,9 +336,9 @@ export default function TemplatesPage() {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
 
-    // 1. Markdown Images
-    safe = safe.replace(/!\[([^\]]*)\]\(((?:https?:\/\/|data:image\/)[^)]+)\)/gi, (m, alt, url) => {
-      return `<div style="margin: 16px 0; text-align: center;"><img src="${url}" alt="${alt || 'Image'}" style="max-width: 100%; max-height: 240px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 4px 14px rgba(0,0,0,0.3); display: inline-block; object-fit: contain;" /></div>`;
+    // 1. Markdown Images (supports URLs, data URLs, and uploaded files)
+    safe = safe.replace(/!\[([^\]]*)\]\(((?:https?:\/\/|data:image\/|\/api\/upload)[^)]+)\)/gi, (m, alt, url) => {
+      return `<div style="margin: 16px 0; text-align: center;"><img src="${url}" alt="${alt || 'Image'}" style="max-width: 100%; max-height: 250px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 4px 14px rgba(0,0,0,0.3); display: inline-block; object-fit: contain;" /></div>`;
     });
 
     // 2. Action Buttons
@@ -289,8 +346,11 @@ export default function TemplatesPage() {
       return `<div style="margin: 18px 0; text-align: center;"><a href="${url}" target="_blank" rel="noopener noreferrer" style="background: linear-gradient(135deg, #FF324B, #E0283E); color: #FFFFFF !important; padding: 11px 24px; text-decoration: none; border-radius: 6px; font-weight: 700; display: inline-block; box-shadow: 0 4px 14px rgba(255,50,75,0.3); font-size: 13px; letter-spacing: 0.02em;">${label}</a></div>`;
     });
 
-    // 3. Links
-    safe = safe.replace(/\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^)]+)\)/gi, (m, label, url) => {
+    // 3. Document Attachments and Links
+    safe = safe.replace(/\[([^\]]+)\]\(((?:https?:\/\/|mailto:|\/api\/upload)[^)]+)\)/gi, (m, label, url) => {
+      if (label.includes('📎') || url.includes('/api/upload')) {
+        return `<div style="margin: 10px 0;"><a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #38BDF8; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25); padding: 8px 14px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">${label}</a></div>`;
+      }
       return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #FF6B7E; text-decoration: underline; font-weight: 600;">${label}</a>`;
     });
 
@@ -321,18 +381,27 @@ export default function TemplatesPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
       
+      {/* Hidden Native File Explorer Input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileSelect}
+        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip"
+        style={{ display: 'none' }}
+      />
+
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <span className="role-badge admin">TEMPLATE STUDIO</span>
-            <span style={{ fontSize: '12px', color: '#64748B' }}>Editable Templates • Media &amp; Source Tools • Live Preview</span>
+            <span style={{ fontSize: '12px', color: '#64748B' }}>Proposal Templates • File Upload from Device • Live Preview</span>
           </div>
           <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#FFFFFF' }}>
             Proposal Email Templates
           </h1>
           <p style={{ fontSize: '14px', color: '#94A3B8', marginTop: '2px' }}>
-            Upload, customize, add visual media and sources, and preview personalized outreach proposals.
+            Upload images and document files from your computer, customize proposal content, and preview outreach in real time.
           </p>
         </div>
 
@@ -441,117 +510,133 @@ export default function TemplatesPage() {
               />
             </div>
 
-            {/* MEDIA & SOURCE TOOLS BAR */}
+            {/* ADMIN MEDIA & FILE MANAGER TOOLBAR */}
             <div style={{ 
-              background: 'linear-gradient(180deg, rgba(31, 73, 125, 0.12) 0%, rgba(15, 23, 42, 0.3) 100%)', 
-              border: '1px solid rgba(56, 189, 248, 0.2)', 
+              background: 'linear-gradient(180deg, rgba(31, 73, 125, 0.14) 0%, rgba(15, 23, 42, 0.3) 100%)', 
+              border: '1px solid rgba(56, 189, 248, 0.25)', 
               borderRadius: '8px', 
-              padding: '12px', 
+              padding: '12px 14px', 
               marginBottom: '14px' 
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#38BDF8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Add Media, Sources &amp; Interactive Buttons:
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#38BDF8', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Paperclip size={13} color="#38BDF8" />
+                  Upload from Device &amp; Add Sources:
                 </span>
-                <span style={{ fontSize: '11px', color: '#64748B' }}>
-                  Rich multi-format support
+                <span style={{ fontSize: '11px', color: '#94A3B8' }}>
+                  Supports Images, PDFs &amp; Documents
                 </span>
               </div>
 
+              {/* Action Buttons */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {/* PRIMARY ACTION: Native File Explorer Upload */}
                 <button
                   type="button"
-                  onClick={() => setActiveModal(activeModal === 'image' ? null : 'image')}
+                  onClick={handleOpenFileExplorer}
+                  disabled={uploading}
+                  className="btn btn-primary btn-sm"
+                  style={{
+                    fontSize: '11px',
+                    padding: '6px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontWeight: 700
+                  }}
+                  title="Choose image or any document file from your computer"
+                >
+                  {uploading ? (
+                    <>
+                      <RefreshCw size={13} className="spin" />
+                      <span>Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={13} />
+                      <span>Upload Image or File (File Explorer)</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Optional Custom Image via URL */}
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(activeModal === 'image_url' ? null : 'image_url')}
                   className="btn btn-secondary btn-sm"
                   style={{
                     fontSize: '11px',
-                    padding: '5px 10px',
-                    background: activeModal === 'image' ? 'rgba(255, 50, 75, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                    borderColor: activeModal === 'image' ? '#FF324B' : 'rgba(255, 255, 255, 0.1)'
+                    padding: '6px 10px',
+                    background: activeModal === 'image_url' ? 'rgba(255, 50, 75, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    borderColor: activeModal === 'image_url' ? '#FF324B' : 'rgba(255, 255, 255, 0.1)'
                   }}
                 >
                   <ImageIcon size={13} color="#FF6B7E" />
-                  <span>+ Add Image</span>
+                  <span>Image URL</span>
                 </button>
 
+                {/* Custom Link / Source */}
                 <button
                   type="button"
                   onClick={() => setActiveModal(activeModal === 'link' ? null : 'link')}
                   className="btn btn-secondary btn-sm"
                   style={{
                     fontSize: '11px',
-                    padding: '5px 10px',
+                    padding: '6px 10px',
                     background: activeModal === 'link' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                     borderColor: activeModal === 'link' ? '#38BDF8' : 'rgba(255, 255, 255, 0.1)'
                   }}
                 >
                   <Link2 size={13} color="#38BDF8" />
-                  <span>+ Add Document / Link</span>
+                  <span>Add Web Link / Source</span>
                 </button>
 
+                {/* Custom CTA Action Button */}
                 <button
                   type="button"
                   onClick={() => setActiveModal(activeModal === 'button' ? null : 'button')}
                   className="btn btn-secondary btn-sm"
                   style={{
                     fontSize: '11px',
-                    padding: '5px 10px',
+                    padding: '6px 10px',
                     background: activeModal === 'button' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                     borderColor: activeModal === 'button' ? '#10B981' : 'rgba(255, 255, 255, 0.1)'
                   }}
                 >
                   <MousePointerClick size={13} color="#10B981" />
-                  <span>+ Add Action Button (CTA)</span>
+                  <span>Add Action Button</span>
                 </button>
               </div>
 
-              {/* MODAL 1: ADD IMAGE DRAWER */}
-              {activeModal === 'image' && (
-                <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(7, 9, 14, 0.85)', borderRadius: '6px', border: '1px solid rgba(255, 50, 75, 0.3)' }}>
+              {/* DRAWER 1: Custom Image via URL */}
+              {activeModal === 'image_url' && (
+                <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(7, 9, 14, 0.9)', borderRadius: '6px', border: '1px solid rgba(255, 50, 75, 0.3)' }}>
                   <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Insert Image into Proposal</span>
+                    <span>Insert Image via Custom Web URL</span>
                     <button type="button" onClick={() => setActiveModal(null)} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}><X size={12} /></button>
                   </div>
-                  
-                  {/* Preset Quick Chips */}
-                  <div style={{ marginBottom: '10px' }}>
-                    <div style={{ fontSize: '10px', color: '#94A3B8', marginBottom: '4px' }}>Quick Presets:</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                      {imagePresets.map((p, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => { setModalImgUrl(p.url); setModalImgAlt(p.alt); }}
-                          style={{ fontSize: '10px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#CBD5E1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
-                        >
-                          {p.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px', marginBottom: '8px' }}>
                     <input
                       type="text"
-                      placeholder="Image URL (https://... or data:image/...)"
-                      value={modalImgUrl}
-                      onChange={(e) => setModalImgUrl(e.target.value)}
+                      placeholder="Enter Image URL (e.g. https://your-domain.com/banner.png)"
+                      value={customImgUrl}
+                      onChange={(e) => setCustomImgUrl(e.target.value)}
                       className="form-input"
                       style={{ fontSize: '11px', height: '32px' }}
                     />
                     <input
                       type="text"
-                      placeholder="Alt Text / Caption"
-                      value={modalImgAlt}
-                      onChange={(e) => setModalImgAlt(e.target.value)}
+                      placeholder="Image Description / Alt Text"
+                      value={customImgAlt}
+                      onChange={(e) => setCustomImgAlt(e.target.value)}
                       className="form-input"
                       style={{ fontSize: '11px', height: '32px' }}
                     />
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleInsertImage(modalImgUrl, modalImgAlt)}
-                    disabled={!modalImgUrl}
+                    onClick={handleInsertCustomImage}
+                    disabled={!customImgUrl}
                     className="btn btn-primary btn-sm"
                     style={{ fontSize: '11px', padding: '4px 12px' }}
                   >
@@ -560,53 +645,35 @@ export default function TemplatesPage() {
                 </div>
               )}
 
-              {/* MODAL 2: ADD LINK / DOCUMENT DRAWER */}
+              {/* DRAWER 2: Custom Link / Web Source */}
               {activeModal === 'link' && (
-                <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(7, 9, 14, 0.85)', borderRadius: '6px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+                <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(7, 9, 14, 0.9)', borderRadius: '6px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
                   <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Insert Document, Source, or Website Link</span>
+                    <span>Insert Custom Web Link or Source</span>
                     <button type="button" onClick={() => setActiveModal(null)} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}><X size={12} /></button>
                   </div>
-                  
-                  {/* Preset Quick Chips */}
-                  <div style={{ marginBottom: '10px' }}>
-                    <div style={{ fontSize: '10px', color: '#94A3B8', marginBottom: '4px' }}>Quick Source Presets:</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                      {linkPresets.map((p, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => { setModalLinkText(p.text); setModalLinkUrl(p.url); }}
-                          style={{ fontSize: '10px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#CBD5E1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
-                        >
-                          {p.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
                   <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr', gap: '8px', marginBottom: '8px' }}>
                     <input
                       type="text"
-                      placeholder="Link Text (e.g. Download Pitch Deck)"
-                      value={modalLinkText}
-                      onChange={(e) => setModalLinkText(e.target.value)}
+                      placeholder="Link Title (e.g. Official University Portal)"
+                      value={customLinkText}
+                      onChange={(e) => setCustomLinkText(e.target.value)}
                       className="form-input"
                       style={{ fontSize: '11px', height: '32px' }}
                     />
                     <input
                       type="text"
-                      placeholder="Target URL (https://...)"
-                      value={modalLinkUrl}
-                      onChange={(e) => setModalLinkUrl(e.target.value)}
+                      placeholder="Destination URL (e.g. https://...)"
+                      value={customLinkUrl}
+                      onChange={(e) => setCustomLinkUrl(e.target.value)}
                       className="form-input"
                       style={{ fontSize: '11px', height: '32px' }}
                     />
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleInsertLink(modalLinkText, modalLinkUrl)}
-                    disabled={!modalLinkUrl}
+                    onClick={handleInsertCustomLink}
+                    disabled={!customLinkUrl}
                     className="btn btn-secondary btn-sm"
                     style={{ fontSize: '11px', padding: '4px 12px' }}
                   >
@@ -615,58 +682,83 @@ export default function TemplatesPage() {
                 </div>
               )}
 
-              {/* MODAL 3: ADD ACTION BUTTON DRAWER */}
+              {/* DRAWER 3: Custom Action Button */}
               {activeModal === 'button' && (
-                <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(7, 9, 14, 0.85)', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(7, 9, 14, 0.9)', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                   <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Insert Branded Call-To-Action (CTA) Button</span>
+                    <span>Insert Custom Action Button</span>
                     <button type="button" onClick={() => setActiveModal(null)} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}><X size={12} /></button>
                   </div>
-                  
-                  {/* Preset Quick Chips */}
-                  <div style={{ marginBottom: '10px' }}>
-                    <div style={{ fontSize: '10px', color: '#94A3B8', marginBottom: '4px' }}>Quick Button Presets:</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                      {buttonPresets.map((p, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => { setModalBtnText(p.text); setModalBtnUrl(p.url); }}
-                          style={{ fontSize: '10px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#CBD5E1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
-                        >
-                          {p.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
                   <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr', gap: '8px', marginBottom: '8px' }}>
                     <input
                       type="text"
-                      placeholder="Button Text (e.g. Schedule Meeting)"
-                      value={modalBtnText}
-                      onChange={(e) => setModalBtnText(e.target.value)}
+                      placeholder="Button Label (e.g. Schedule Presentation)"
+                      value={customBtnText}
+                      onChange={(e) => setCustomBtnText(e.target.value)}
                       className="form-input"
                       style={{ fontSize: '11px', height: '32px' }}
                     />
                     <input
                       type="text"
-                      placeholder="Destination URL (https://...)"
-                      value={modalBtnUrl}
-                      onChange={(e) => setModalBtnUrl(e.target.value)}
+                      placeholder="Target Action URL (e.g. https://...)"
+                      value={customBtnUrl}
+                      onChange={(e) => setCustomBtnUrl(e.target.value)}
                       className="form-input"
                       style={{ fontSize: '11px', height: '32px' }}
                     />
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleInsertButton(modalBtnText, modalBtnUrl)}
-                    disabled={!modalBtnUrl}
+                    onClick={handleInsertCustomButton}
+                    disabled={!customBtnUrl}
                     className="btn btn-primary btn-sm"
                     style={{ fontSize: '11px', padding: '4px 12px' }}
                   >
-                    Insert CTA Button
+                    Insert Action Button
                   </button>
+                </div>
+              )}
+
+              {/* Uploaded Files Chips in Current Session */}
+              {uploadedSessionFiles.length > 0 && (
+                <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <div style={{ fontSize: '10px', color: '#94A3B8', marginBottom: '5px' }}>
+                    Files Uploaded from Device (Click to insert into proposal):
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {uploadedSessionFiles.map((f) => (
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={() => {
+                          if (f.isImage) {
+                            setBody(prev => prev + `\n\n![${f.filename}](${f.url})\n\n`);
+                          } else {
+                            setBody(prev => prev + `\n\n[📎 Attached Document: ${f.filename} (${formatFileSize(f.size)})](${f.url})\n\n`);
+                          }
+                          setAlert({ type: 'success', message: `Inserted "${f.filename}" into proposal body.` });
+                        }}
+                        style={{
+                          fontSize: '11px',
+                          background: 'rgba(255, 255, 255, 0.06)',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          color: '#E2E8F0',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}
+                        title="Click to insert into email body"
+                      >
+                        {f.isImage ? <ImageIcon size={11} color="#FF6B7E" /> : <Paperclip size={11} color="#38BDF8" />}
+                        <span>{f.filename}</span>
+                        <span style={{ fontSize: '9px', color: '#64748B' }}>({formatFileSize(f.size)})</span>
+                        <span style={{ color: '#38BDF8', fontWeight: 700 }}>+</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
