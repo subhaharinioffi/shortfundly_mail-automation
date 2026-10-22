@@ -8,7 +8,6 @@ import {
   CheckSquare,
   Square,
   ShieldCheck,
-  AlertTriangle,
   RefreshCw,
   CheckCircle2,
   AlertCircle,
@@ -23,13 +22,12 @@ import {
   X,
   Building,
   Mail,
-  UserCheck,
   ExternalLink,
   Sliders,
   FileText,
   MapPin,
-  Clock,
-  Globe,
+  Lock,
+  ArrowRight,
   Copy,
 } from 'lucide-react';
 
@@ -40,21 +38,19 @@ export default function CampaignsPage() {
   const [colleges, setColleges] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  // Filter States
+  // Sequential Step Filtering States: Country -> State -> District -> Batches
   const [availableStates, setAvailableStates] = useState([]);
   const [availableDistricts, setAvailableDistricts] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState('India');
-  const [selectedState, setSelectedState] = useState('all');
+  const [selectedState, setSelectedState] = useState(''); // Empty initially to enforce Country -> State -> District flow
   const [selectedDistrict, setSelectedDistrict] = useState('all');
   const [selectedRole, setSelectedRole] = useState('all');
   const [search, setSearch] = useState('');
 
   // Selected Colleges and Target Contact Overrides
-  // selectedIds: Set of collegeId strings
   const [selectedIds, setSelectedIds] = useState(new Set());
-  // contactOverrides: { [collegeId]: { email, role, personName } }
   const [contactOverrides, setContactOverrides] = useState({});
 
   // Auto Batching System
@@ -81,6 +77,9 @@ export default function CampaignsPage() {
   const [alert, setAlert] = useState(null);
   const [copiedEmail, setCopiedEmail] = useState(null);
 
+  // Check if location is selected to unlock batch controls
+  const isLocationChosen = Boolean(selectedState && selectedState.trim() !== '');
+
   // 1. Load Filter Options (States & Districts)
   const fetchFilters = useCallback(async (stateParam = '') => {
     try {
@@ -100,8 +99,14 @@ export default function CampaignsPage() {
     }
   }, [availableStates.length]);
 
-  // 2. Fetch Colleges matching current filters
+  // 2. Fetch Colleges matching current location & filters
   const fetchColleges = useCallback(async () => {
+    if (!selectedState) {
+      setColleges([]);
+      setSelectedIds(new Set());
+      return;
+    }
+
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -117,7 +122,7 @@ export default function CampaignsPage() {
       const list = data.colleges || [];
       setColleges(list);
 
-      // Auto-select first batch if nothing selected yet or filters changed
+      // Auto-select first batch of this region
       const initialBatch = list.slice(0, batchSize).map((c) => c.id);
       setSelectedIds(new Set(initialBatch));
       setActiveBatchIndex(0);
@@ -149,7 +154,7 @@ export default function CampaignsPage() {
     }
   };
 
-  // Initial Load
+  // Initial Setup
   useEffect(() => {
     fetchFilters();
     fetchTemplates();
@@ -160,15 +165,20 @@ export default function CampaignsPage() {
 
   // Re-fetch districts when selected state changes
   useEffect(() => {
-    fetchFilters(selectedState);
-    setSelectedDistrict('all');
+    if (selectedState) {
+      fetchFilters(selectedState);
+      setSelectedDistrict('all');
+    } else {
+      setAvailableDistricts([]);
+      setSelectedDistrict('all');
+    }
   }, [selectedState, fetchFilters]);
 
-  // Re-fetch colleges when filters change
+  // Re-fetch colleges when state, district, role, or search changes
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchColleges();
-    }, 250);
+    }, 200);
     return () => clearTimeout(timer);
   }, [fetchColleges]);
 
@@ -224,8 +234,9 @@ export default function CampaignsPage() {
     }));
   };
 
-  // AUTO-SEPARATE BATCHES CALCULATION
+  // AUTO-SEPARATE BATCHES CALCULATION (Only active when location is selected)
   const batches = useMemo(() => {
+    if (!isLocationChosen || colleges.length === 0) return [];
     const bList = [];
     const size = Math.max(1, batchSize);
     const totalItems = colleges.length;
@@ -245,7 +256,7 @@ export default function CampaignsPage() {
       });
     }
     return bList;
-  }, [colleges, batchSize]);
+  }, [isLocationChosen, colleges, batchSize]);
 
   // Keep active batch index within bounds
   useEffect(() => {
@@ -258,6 +269,7 @@ export default function CampaignsPage() {
 
   // Determine which items to render in list based on viewMode
   const displayItems = useMemo(() => {
+    if (!isLocationChosen) return [];
     if (viewMode === 'active_batch') {
       return activeBatch.items || [];
     }
@@ -267,7 +279,7 @@ export default function CampaignsPage() {
     // all_filtered paginated
     const start = (listPage - 1) * listPageSize;
     return colleges.slice(start, start + listPageSize);
-  }, [viewMode, activeBatch, colleges, selectedIds, listPage]);
+  }, [isLocationChosen, viewMode, activeBatch, colleges, selectedIds, listPage]);
 
   // BATCH & SELECTION ACTIONS
   const selectSingleBatch = (bIndex) => {
@@ -338,35 +350,39 @@ export default function CampaignsPage() {
     }
 
     // Build specific recipient payload with verified email addresses
-    const recipients = targetColleges.map((col) => {
-      const resolved = getResolvedRecipient(col);
-      return {
-        collegeId: col.id,
-        collegeName: col.collegeName,
-        recipientEmail: resolved.email,
-        role: resolved.role,
-        personName: resolved.personName,
-        state: col.state,
-        district: col.district,
-        websiteUrl: col.officialWebsite || '',
-      };
-    }).filter((r) => r.recipientEmail && r.recipientEmail.includes('@'));
+    const recipients = targetColleges
+      .map((col) => {
+        const resolved = getResolvedRecipient(col);
+        return {
+          collegeId: col.id,
+          collegeName: col.collegeName,
+          recipientEmail: resolved.email,
+          role: resolved.role,
+          personName: resolved.personName,
+          state: col.state,
+          district: col.district,
+          websiteUrl: col.officialWebsite || '',
+        };
+      })
+      .filter((r) => r.recipientEmail && r.recipientEmail.includes('@'));
 
     if (recipients.length === 0) {
       setAlert({
         type: 'danger',
-        message: 'None of the selected institutions have a valid contact email. Please choose colleges with email addresses.',
+        message: 'None of the selected institutions have a valid contact email. Please select colleges with verified emails.',
       });
       return;
     }
 
     const confirmMsg =
       `CONFIRM BULK OUTREACH DISPATCH:\n\n` +
-      `• Target Colleges: ${targetColleges.length} selected institutions\n` +
-      `• Valid Email Recipients: ${recipients.length} addresses\n` +
-      `• Batch / Delay: ${throttleDelaySec}s pause between emails (Anti-Spam Throttling)\n` +
-      `• Duplicate Protection: ${bypassDuplicateCheck ? 'OFF (Will Resend)' : 'ON (Protects Previously Contacted)'}\n\n` +
-      `Do you want to dispatch this email campaign now?`;
+      `• Location Target: ${selectedState} (${selectedDistrict === 'all' ? 'All Districts' : selectedDistrict})\n` +
+      `• Selected Colleges: ${targetColleges.length} institutions\n` +
+      `• Valid Recipients: ${recipients.length} email addresses\n` +
+      `• Active Batch: Batch #${activeBatchIndex + 1}\n` +
+      `• Throttling Delay: ${throttleDelaySec}s pause between emails\n` +
+      `• Duplicate Protection: ${bypassDuplicateCheck ? 'OFF (Will Resend)' : 'ON (Protects Contacted)'}\n\n` +
+      `Dispatch emails now?`;
 
     if (!window.confirm(confirmMsg)) return;
 
@@ -432,7 +448,6 @@ export default function CampaignsPage() {
           results: [...results],
         });
 
-        // Delay between recipients to respect SMTP limits
         if (i < recipients.length - 1) {
           await new Promise((r) => setTimeout(r, throttleDelaySec * 1000));
         }
@@ -465,17 +480,17 @@ export default function CampaignsPage() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <span className="role-badge admin" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Zap size={11} /> Bulk Outreach Engine
+              <Zap size={11} /> Guided Bulk Outreach
             </span>
             <span style={{ fontSize: '12px', color: '#94A3B8' }}>
-              Automated Batch Processing • Anti-Spam Safe • Verified Indian Institutions
+              Step-by-Step Location Filter &bull; Batch Partitioning &bull; Anti-Spam Safe
             </span>
           </div>
           <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.5px' }}>
             Automated Bulk Email Campaigns
           </h1>
           <p style={{ fontSize: '13px', color: '#94A3B8', marginTop: '3px' }}>
-            Target colleges by State, District, and Staff Role. Send structured outreach in clean, rate-controlled batches.
+            Choose Country &rarr; Select State &rarr; Select District &rarr; Configure Batches &rarr; Dispatch outreach.
           </p>
         </div>
 
@@ -522,47 +537,50 @@ export default function CampaignsPage() {
       >
         <div>
           <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Filtered Colleges
+            Target Region
+          </span>
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#FFFFFF', marginTop: '4px' }}>
+            {selectedState ? (
+              <span style={{ color: '#38BDF8' }}>
+                {selectedState} {selectedDistrict !== 'all' ? `• ${selectedDistrict}` : ''}
+              </span>
+            ) : (
+              <span style={{ color: '#F59E0B', fontSize: '14px' }}>Choose State Below</span>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Colleges In Filter
           </span>
           <div style={{ fontSize: '22px', fontWeight: 800, color: '#FFFFFF', marginTop: '2px' }}>
-            {loading ? '...' : colleges.length}{' '}
+            {isLocationChosen ? (loading ? '...' : colleges.length) : '0'}{' '}
             <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>institutions</span>
           </div>
         </div>
 
         <div>
           <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Total Batches
+            Available Batches
           </span>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#38BDF8', marginTop: '2px' }}>
-            {batches.length}{' '}
-            <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>
-              ({batchSize} per batch)
-            </span>
+          <div style={{ fontSize: '22px', fontWeight: 800, color: isLocationChosen ? '#38BDF8' : '#64748B', marginTop: '2px' }}>
+            {isLocationChosen ? batches.length : '—'}{' '}
+            {isLocationChosen && (
+              <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>
+                ({batchSize}/batch)
+              </span>
+            )}
           </div>
         </div>
 
         <div>
           <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Active Batch
+            Ready To Send
           </span>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#F59E0B', marginTop: '2px' }}>
-            Batch #{batches.length > 0 ? activeBatchIndex + 1 : 0}{' '}
-            <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>
-              ({activeBatch.count} colleges)
-            </span>
-          </div>
-        </div>
-
-        <div>
-          <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Ready to Send
-          </span>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#FF324B', marginTop: '2px' }}>
-            {selectedIds.size}{' '}
-            <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>
-              selected
-            </span>
+          <div style={{ fontSize: '22px', fontWeight: 800, color: isLocationChosen && selectedIds.size > 0 ? '#FF324B' : '#64748B', marginTop: '2px' }}>
+            {isLocationChosen ? selectedIds.size : '0'}{' '}
+            <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 400 }}>selected</span>
           </div>
         </div>
 
@@ -570,406 +588,601 @@ export default function CampaignsPage() {
           <span style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Estimated Dispatch
           </span>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#10B981', marginTop: '2px' }}>
-            ~{estFormatted}
+          <div style={{ fontSize: '22px', fontWeight: 800, color: isLocationChosen && selectedIds.size > 0 ? '#10B981' : '#64748B', marginTop: '2px' }}>
+            {isLocationChosen && selectedIds.size > 0 ? `~${estFormatted}` : '—'}
           </div>
         </div>
       </div>
 
       {/* Main Studio 2-Column Split */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.28fr 0.72fr', gap: '22px' }}>
-        {/* ================= COLUMN 1: RECIPIENT & BATCH SELECTION ================= */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '18px 20px' }}>
-          {/* Section Heading & Quick Select Controls */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Layers size={18} color="#FF324B" />
-              <span style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF' }}>
-                Target Colleges &amp; Batch Groups
-              </span>
+        {/* ================= COLUMN 1: STEP-BY-STEP FILTERING & BATCHING ================= */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '18px 20px' }}>
+          
+          {/* STEP PROGRESS GUIDE BAR */}
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              padding: '10px 14px',
+              borderRadius: '8px',
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+            }}
+          >
+            {/* Step 1: Country */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                color: '#10B981',
+                fontSize: '11px',
+                fontWeight: 700,
+              }}
+            >
+              <Check size={12} /> 1. Country: India
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={selectAllFiltered}
-                className="btn btn-secondary btn-sm"
-                title="Select all colleges in filtered pool"
-                style={{ fontSize: '11px', padding: '4px 10px' }}
-              >
-                <CheckSquare size={12} color="#FF324B" />
-                <span>Select All ({colleges.length})</span>
-              </button>
-              <button
-                type="button"
-                onClick={deselectAll}
-                className="btn btn-secondary btn-sm"
-                title="Deselect all recipients"
-                style={{ fontSize: '11px', padding: '4px 10px' }}
-              >
-                <Square size={12} />
-                <span>Clear</span>
-              </button>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {[10, 25, 50, 100].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => selectFirstN(n)}
-                    className="btn btn-outline btn-sm"
-                    style={{ fontSize: '10px', padding: '3px 6px' }}
-                    title={`Select first ${n} colleges`}
-                  >
-                    +{n}
-                  </button>
-                ))}
-              </div>
+            <ArrowRight size={13} color="#64748B" />
+
+            {/* Step 2: State */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                background: selectedState
+                  ? 'rgba(16, 185, 129, 0.12)'
+                  : 'rgba(255, 50, 75, 0.15)',
+                border: selectedState
+                  ? '1px solid rgba(16, 185, 129, 0.3)'
+                  : '1px solid #FF324B',
+                color: selectedState ? '#10B981' : '#FFFFFF',
+                fontSize: '11px',
+                fontWeight: 700,
+              }}
+            >
+              {selectedState ? <Check size={12} /> : <span>2.</span>}
+              Choose State {selectedState ? `(${selectedState})` : '📍'}
+            </div>
+
+            <ArrowRight size={13} color="#64748B" />
+
+            {/* Step 3: District */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                background: isLocationChosen
+                  ? selectedDistrict !== 'all' && selectedDistrict
+                    ? 'rgba(16, 185, 129, 0.12)'
+                    : 'rgba(56, 189, 248, 0.15)'
+                  : 'rgba(255, 255, 255, 0.03)',
+                border: isLocationChosen
+                  ? '1px solid rgba(56, 189, 248, 0.3)'
+                  : '1px solid rgba(255, 255, 255, 0.08)',
+                color: isLocationChosen ? '#38BDF8' : '#64748B',
+                fontSize: '11px',
+                fontWeight: 600,
+              }}
+            >
+              <span>3.</span> District {selectedDistrict && selectedDistrict !== 'all' ? `(${selectedDistrict})` : ''}
+            </div>
+
+            <ArrowRight size={13} color="#64748B" />
+
+            {/* Step 4: Batches */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                background: isLocationChosen
+                  ? 'rgba(245, 158, 11, 0.15)'
+                  : 'rgba(255, 255, 255, 0.03)',
+                border: isLocationChosen
+                  ? '1px solid rgba(245, 158, 11, 0.3)'
+                  : '1px solid rgba(255, 255, 255, 0.08)',
+                color: isLocationChosen ? '#F59E0B' : '#64748B',
+                fontSize: '11px',
+                fontWeight: 600,
+              }}
+            >
+              {isLocationChosen ? <Zap size={12} /> : <Lock size={12} />}
+              4. Batches {isLocationChosen ? '⚡ Ready' : '🔒 Locked'}
             </div>
           </div>
 
-          {/* Filters Bar: Country, State, District, Role, Search */}
+          {/* STEP 1, 2, 3: LOCATION FILTERS BAR */}
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: '0.85fr 1.15fr 1.15fr 1.1fr 1.4fr',
-              gap: '8px',
-              background: 'rgba(255, 255, 255, 0.02)',
-              padding: '10px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              background: 'rgba(15, 23, 42, 0.6)',
+              padding: '14px 16px',
               borderRadius: '8px',
-              border: '1px solid rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
             }}
           >
-            {/* Country Selector */}
-            <select
-              value={selectedCountry}
-              onChange={(e) => setSelectedCountry(e.target.value)}
-              className="form-select"
-              style={{ fontSize: '12px', height: '34px' }}
-            >
-              <option value="India">🇮🇳 India</option>
-              <option value="United States" disabled>🇺🇸 United States (Coming Soon)</option>
-              <option value="United Kingdom" disabled>🇬🇧 United Kingdom (Coming Soon)</option>
-              <option value="Canada" disabled>🇨🇦 Canada (Coming Soon)</option>
-            </select>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#38BDF8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Location &amp; Audience Filters
+              </span>
+              <span style={{ fontSize: '11px', color: '#94A3B8' }}>
+                Follow Country &rarr; State &rarr; District to enable batches
+              </span>
+            </div>
 
-            {/* State Selector */}
-            <select
-              value={selectedState}
-              onChange={(e) => setSelectedState(e.target.value)}
-              className="form-select"
-              style={{ fontSize: '12px', height: '34px' }}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1.3fr 1.3fr',
+                gap: '10px',
+              }}
             >
-              <option value="all">All States ({availableStates.length})</option>
-              {availableStates.map((st) => (
-                <option key={st} value={st}>
-                  {st}
-                </option>
-              ))}
-            </select>
+              {/* Step 1: Country */}
+              <div>
+                <label className="form-label" style={{ fontSize: '11px', marginBottom: '4px' }}>
+                  Step 1: Country <span className="required">*</span>
+                </label>
+                <select
+                  value={selectedCountry}
+                  onChange={(e) => setSelectedCountry(e.target.value)}
+                  className="form-select"
+                  style={{ fontSize: '12px', height: '36px' }}
+                >
+                  <option value="India">🇮🇳 India</option>
+                  <option value="United States" disabled>🇺🇸 United States (Coming Soon)</option>
+                  <option value="United Kingdom" disabled>🇬🇧 United Kingdom (Coming Soon)</option>
+                  <option value="Canada" disabled>🇨🇦 Canada (Coming Soon)</option>
+                </select>
+              </div>
 
-            {/* District Selector */}
-            <select
-              value={selectedDistrict}
-              onChange={(e) => setSelectedDistrict(e.target.value)}
-              className="form-select"
-              style={{ fontSize: '12px', height: '34px' }}
-            >
-              <option value="all">
-                {selectedState === 'all'
-                  ? 'All Districts'
-                  : `All ${selectedState} Districts (${availableDistricts.length})`}
-              </option>
-              {availableDistricts.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-
-            {/* Staff Role Selector */}
-            <select
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-              className="form-select"
-              style={{ fontSize: '12px', height: '34px' }}
-            >
-              <option value="all">All Roles</option>
-              <option value="Principal">👑 Principal</option>
-              <option value="Dean">🎓 Dean</option>
-              <option value="Head of Department">🔬 HOD</option>
-              <option value="Placement">💼 Placement Cell</option>
-              <option value="Registrar">🏛️ Registrar</option>
-            </select>
-
-            {/* Search Input */}
-            <div style={{ position: 'relative' }}>
-              <input
-                type="text"
-                placeholder="Search college, city, or email..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="form-input"
-                style={{ fontSize: '12px', paddingLeft: '30px', height: '34px' }}
-              />
-              <Search
-                size={13}
-                style={{
-                  position: 'absolute',
-                  left: '9px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#64748B',
-                }}
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch('')}
+              {/* Step 2: State */}
+              <div>
+                <label className="form-label" style={{ fontSize: '11px', marginBottom: '4px' }}>
+                  Step 2: State <span className="required">*</span>
+                </label>
+                <select
+                  value={selectedState}
+                  onChange={(e) => setSelectedState(e.target.value)}
+                  className="form-select"
                   style={{
-                    position: 'absolute',
-                    right: '8px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: '#94A3B8',
-                    cursor: 'pointer',
+                    fontSize: '12px',
+                    height: '36px',
+                    border: !selectedState ? '1px solid #FF324B' : '1px solid var(--border-color)',
+                    background: !selectedState ? 'rgba(255, 50, 75, 0.08)' : undefined,
                   }}
                 >
-                  <X size={12} />
-                </button>
+                  <option value="">-- Choose State to Unlock Batches --</option>
+                  <option value="all">🌍 All States (All-India Pool)</option>
+                  {availableStates.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Step 3: District */}
+              <div>
+                <label className="form-label" style={{ fontSize: '11px', marginBottom: '4px' }}>
+                  Step 3: District
+                </label>
+                <select
+                  value={selectedDistrict}
+                  disabled={!isLocationChosen}
+                  onChange={(e) => setSelectedDistrict(e.target.value)}
+                  className="form-select"
+                  style={{
+                    fontSize: '12px',
+                    height: '36px',
+                    opacity: isLocationChosen ? 1 : 0.6,
+                    cursor: isLocationChosen ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  <option value="all">
+                    {!isLocationChosen
+                      ? 'Locked: Choose State First'
+                      : selectedState === 'all'
+                      ? 'All Districts'
+                      : `All ${selectedState} Districts (${availableDistricts.length})`}
+                  </option>
+                  {availableDistricts.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Quick State Presets & Secondary Filters */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', paddingTop: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '11px', color: '#64748B' }}>Quick Pick:</span>
+                {['Tamil Nadu', 'Andhra Pradesh', 'Karnataka', 'Maharashtra', 'Odisha', 'all'].map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => setSelectedState(st)}
+                    className="btn btn-sm"
+                    style={{
+                      padding: '2px 8px',
+                      fontSize: '10px',
+                      background: selectedState === st ? '#FF324B' : 'rgba(255, 255, 255, 0.04)',
+                      color: selectedState === st ? '#FFFFFF' : '#94A3B8',
+                      border: '1px solid ' + (selectedState === st ? '#FF324B' : 'rgba(255, 255, 255, 0.08)'),
+                      borderRadius: '4px',
+                    }}
+                  >
+                    {st === 'all' ? 'All India' : st}
+                  </button>
+                ))}
+              </div>
+
+              {/* Staff Role & Search (When location chosen) */}
+              {isLocationChosen && (
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    className="form-select"
+                    style={{ fontSize: '11px', height: '28px', padding: '2px 8px' }}
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="Principal">👑 Principal</option>
+                    <option value="Dean">🎓 Dean</option>
+                    <option value="Head of Department">🔬 HOD</option>
+                    <option value="Placement">💼 Placement</option>
+                    <option value="Registrar">🏛️ Registrar</option>
+                  </select>
+
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      placeholder="Search college, email..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="form-input"
+                      style={{ fontSize: '11px', height: '28px', paddingLeft: '26px', width: '160px' }}
+                    />
+                    <Search
+                      size={12}
+                      style={{
+                        position: 'absolute',
+                        left: '8px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: '#64748B',
+                      }}
+                    />
+                  </div>
+                </div>
               )}
             </div>
           </div>
 
-          {/* AUTO-SEPARATE BATCH SYSTEM CONTROLS */}
-          <div
-            style={{
-              background: 'linear-gradient(180deg, rgba(31, 73, 125, 0.15) 0%, rgba(15, 23, 42, 0.25) 100%)',
-              border: '1px solid rgba(56, 189, 248, 0.2)',
-              borderRadius: '8px',
-              padding: '12px 14px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Sparkles size={15} color="#38BDF8" />
-                <span
+          {/* STEP 4: BATCH PARTITIONING & SELECTION CONTROLS */}
+          {!isLocationChosen ? (
+            /* LOCKED BATCH NOTICE */
+            <div
+              style={{
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px dashed rgba(255, 255, 255, 0.15)',
+                borderRadius: '8px',
+                padding: '36px 20px',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 50, 75, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FF324B',
+                  marginBottom: '4px',
+                }}
+              >
+                <Lock size={20} />
+              </div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#FFFFFF' }}>
+                Step 4: Batch Selection is Locked
+              </div>
+              <div style={{ fontSize: '12px', color: '#94A3B8', maxWidth: '420px', lineHeight: 1.6 }}>
+                Please select your target <strong>State</strong> (and optionally District) in Step 2 above. Once selected, your colleges and automated batches will instantly unlock here.
+              </div>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedState('Tamil Nadu')}
+                  className="btn btn-outline btn-sm"
+                  style={{ fontSize: '11px' }}
+                >
+                  ⚡ Select Tamil Nadu
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedState('Andhra Pradesh')}
+                  className="btn btn-outline btn-sm"
+                  style={{ fontSize: '11px' }}
+                >
+                  ⚡ Select Andhra Pradesh
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* UNLOCKED BATCH PARTITIONING SYSTEM */
+            <div
+              style={{
+                background: 'linear-gradient(180deg, rgba(31, 73, 125, 0.15) 0%, rgba(15, 23, 42, 0.25) 100%)',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Sparkles size={15} color="#38BDF8" />
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      color: '#38BDF8',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    Step 4: Batch Partitioning Enabled
+                  </span>
+                  <span style={{ fontSize: '11px', color: '#94A3B8' }}>
+                    ({colleges.length} {selectedState} colleges divided into {batches.length} batch groups)
+                  </span>
+                </div>
+
+                {/* Batch Size Selector Buttons */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ fontSize: '11px', color: '#64748B' }}>Batch Size:</span>
+                  {[10, 25, 50, 100].map((sz) => (
+                    <button
+                      key={sz}
+                      type="button"
+                      onClick={() => handleBatchSizeChange(sz)}
+                      className="btn btn-sm"
+                      style={{
+                        padding: '3px 8px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        background: batchSize === sz ? '#FF324B' : 'rgba(255, 255, 255, 0.05)',
+                        color: batchSize === sz ? '#FFFFFF' : '#94A3B8',
+                        border: '1px solid ' + (batchSize === sz ? '#FF324B' : 'rgba(255, 255, 255, 0.1)'),
+                      }}
+                    >
+                      {sz}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Scrollable Batch Tabs Ribbon */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '6px',
+                  overflowX: 'auto',
+                  paddingBottom: '4px',
+                  scrollbarWidth: 'thin',
+                }}
+              >
+                {batches.map((b, idx) => {
+                  const isActive = activeBatchIndex === idx;
+                  const batchColIds = b.items.map((c) => c.id);
+                  const selectedInBatch = batchColIds.filter((id) => selectedIds.has(id)).length;
+                  const isFullySelected = selectedInBatch === b.count && b.count > 0;
+                  const isPartiallySelected = selectedInBatch > 0 && !isFullySelected;
+
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => selectSingleBatch(idx)}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        minWidth: '120px',
+                        cursor: 'pointer',
+                        border: isActive ? '1px solid #FF324B' : '1px solid rgba(255, 255, 255, 0.08)',
+                        background: isActive ? 'rgba(255, 50, 75, 0.15)' : 'rgba(15, 23, 42, 0.6)',
+                        color: isActive ? '#FFFFFF' : '#94A3B8',
+                        transition: 'all 0.15s ease',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: isActive ? '#FF6B7E' : '#E2E8F0' }}>
+                          Batch #{b.batchNumber}
+                        </span>
+                        {isFullySelected ? (
+                          <Check size={12} color="#10B981" />
+                        ) : isPartiallySelected ? (
+                          <span style={{ fontSize: '9px', color: '#F59E0B' }}>
+                            {selectedInBatch}/{b.count}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#64748B', marginTop: '2px' }}>
+                        Colleges {b.startIndex}–{b.endIndex} ({b.count})
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Active Batch Quick Action Bar */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '8px',
+                  paddingTop: '6px',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button
+                    type="button"
+                    disabled={activeBatchIndex === 0}
+                    onClick={() => selectSingleBatch(activeBatchIndex - 1)}
+                    className="btn btn-secondary btn-sm"
+                    style={{ padding: '3px 8px', fontSize: '11px' }}
+                  >
+                    <ChevronLeft size={13} /> Prev Batch
+                  </button>
+                  <button
+                    type="button"
+                    disabled={activeBatchIndex >= batches.length - 1}
+                    onClick={() => selectSingleBatch(activeBatchIndex + 1)}
+                    className="btn btn-secondary btn-sm"
+                    style={{ padding: '3px 8px', fontSize: '11px' }}
+                  >
+                    Next Batch <ChevronRight size={13} />
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => selectSingleBatch(activeBatchIndex)}
+                    className="btn btn-primary btn-sm"
+                    style={{ padding: '3px 10px', fontSize: '11px' }}
+                  >
+                    Select Batch #{batches.length > 0 ? activeBatchIndex + 1 : 1} ({activeBatch.count} colleges)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => appendBatchToSelection(activeBatchIndex)}
+                    className="btn btn-secondary btn-sm"
+                    style={{ padding: '3px 10px', fontSize: '11px' }}
+                  >
+                    + Add to Selection
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW MODE TABS & QUICK SELECTION (When location chosen) */}
+          {isLocationChosen && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', fontSize: '12px' }}>
+              <div style={{ display: 'flex', gap: '4px', background: 'rgba(255, 255, 255, 0.03)', padding: '2px', borderRadius: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('active_batch')}
                   style={{
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    color: '#38BDF8',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
+                    background: viewMode === 'active_batch' ? '#FF324B' : 'transparent',
+                    color: viewMode === 'active_batch' ? '#FFFFFF' : '#94A3B8',
+                    border: 'none',
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '11px',
                   }}
                 >
-                  Batch Partitioning
-                </span>
-                <span style={{ fontSize: '11px', color: '#94A3B8' }}>
-                  ({colleges.length} colleges divided into {batches.length} batch groups)
-                </span>
-              </div>
-
-              {/* Batch Size Selector Buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <span style={{ fontSize: '11px', color: '#64748B' }}>Batch Size:</span>
-                {[10, 25, 50, 100, 200].map((sz) => (
-                  <button
-                    key={sz}
-                    type="button"
-                    onClick={() => handleBatchSizeChange(sz)}
-                    className="btn btn-sm"
-                    style={{
-                      padding: '3px 8px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      background: batchSize === sz ? '#FF324B' : 'rgba(255, 255, 255, 0.05)',
-                      color: batchSize === sz ? '#FFFFFF' : '#94A3B8',
-                      border: '1px solid ' + (batchSize === sz ? '#FF324B' : 'rgba(255, 255, 255, 0.1)'),
-                    }}
-                  >
-                    {sz}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Interactive Scrollable Batch Tabs Ribbon */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '6px',
-                overflowX: 'auto',
-                paddingBottom: '4px',
-                scrollbarWidth: 'thin',
-              }}
-            >
-              {batches.map((b, idx) => {
-                const isActive = activeBatchIndex === idx;
-                const batchColIds = b.items.map((c) => c.id);
-                const selectedInBatch = batchColIds.filter((id) => selectedIds.has(id)).length;
-                const isFullySelected = selectedInBatch === b.count && b.count > 0;
-                const isPartiallySelected = selectedInBatch > 0 && !isFullySelected;
-
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => selectSingleBatch(idx)}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      minWidth: '120px',
-                      cursor: 'pointer',
-                      border: isActive ? '1px solid #FF324B' : '1px solid rgba(255, 255, 255, 0.08)',
-                      background: isActive ? 'rgba(255, 50, 75, 0.15)' : 'rgba(15, 23, 42, 0.6)',
-                      color: isActive ? '#FFFFFF' : '#94A3B8',
-                      transition: 'all 0.15s ease',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: isActive ? '#FF6B7E' : '#E2E8F0' }}>
-                        Batch #{b.batchNumber}
-                      </span>
-                      {isFullySelected ? (
-                        <Check size={12} color="#10B981" />
-                      ) : isPartiallySelected ? (
-                        <span style={{ fontSize: '9px', color: '#F59E0B' }}>
-                          {selectedInBatch}/{b.count}
-                        </span>
-                      ) : null}
-                    </div>
-                    <div style={{ fontSize: '10px', color: '#64748B', marginTop: '2px' }}>
-                      Colleges {b.startIndex}–{b.endIndex} ({b.count})
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Active Batch Quick Action Bar */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '8px',
-                paddingTop: '6px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <button
-                  type="button"
-                  disabled={activeBatchIndex === 0}
-                  onClick={() => selectSingleBatch(activeBatchIndex - 1)}
-                  className="btn btn-secondary btn-sm"
-                  style={{ padding: '3px 8px', fontSize: '11px' }}
-                >
-                  <ChevronLeft size={13} /> Prev Batch
+                  Active Batch ({activeBatch.count})
                 </button>
                 <button
                   type="button"
-                  disabled={activeBatchIndex >= batches.length - 1}
-                  onClick={() => selectSingleBatch(activeBatchIndex + 1)}
-                  className="btn btn-secondary btn-sm"
-                  style={{ padding: '3px 8px', fontSize: '11px' }}
+                  onClick={() => setViewMode('all_selected')}
+                  style={{
+                    background: viewMode === 'all_selected' ? '#FF324B' : 'transparent',
+                    color: viewMode === 'all_selected' ? '#FFFFFF' : '#94A3B8',
+                    border: 'none',
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '11px',
+                  }}
                 >
-                  Next Batch <ChevronRight size={13} />
+                  Selected ({selectedIds.size})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('all_filtered')}
+                  style={{
+                    background: viewMode === 'all_filtered' ? '#FF324B' : 'transparent',
+                    color: viewMode === 'all_filtered' ? '#FFFFFF' : '#94A3B8',
+                    border: 'none',
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    fontSize: '11px',
+                  }}
+                >
+                  All in {selectedState} ({colleges.length})
                 </button>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <button
                   type="button"
-                  onClick={() => selectSingleBatch(activeBatchIndex)}
-                  className="btn btn-primary btn-sm"
-                  style={{ padding: '3px 10px', fontSize: '11px' }}
+                  onClick={selectAllFiltered}
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: '11px', padding: '3px 8px' }}
                 >
-                  Select Batch #{batches.length > 0 ? activeBatchIndex + 1 : 1} ({activeBatch.count} colleges)
+                  <CheckSquare size={12} color="#FF324B" />
+                  <span>Select All ({colleges.length})</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => appendBatchToSelection(activeBatchIndex)}
+                  onClick={deselectAll}
                   className="btn btn-secondary btn-sm"
-                  style={{ padding: '3px 10px', fontSize: '11px' }}
+                  style={{ fontSize: '11px', padding: '3px 8px' }}
                 >
-                  + Add to Selection
+                  <Square size={12} />
+                  <span>Clear</span>
                 </button>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* View Mode Tabs */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
-            <div style={{ display: 'flex', gap: '4px', background: 'rgba(255, 255, 255, 0.03)', padding: '2px', borderRadius: '6px' }}>
-              <button
-                type="button"
-                onClick={() => setViewMode('active_batch')}
-                style={{
-                  background: viewMode === 'active_batch' ? '#FF324B' : 'transparent',
-                  color: viewMode === 'active_batch' ? '#FFFFFF' : '#94A3B8',
-                  border: 'none',
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '11px',
-                }}
-              >
-                Active Batch ({activeBatch.count})
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('all_selected')}
-                style={{
-                  background: viewMode === 'all_selected' ? '#FF324B' : 'transparent',
-                  color: viewMode === 'all_selected' ? '#FFFFFF' : '#94A3B8',
-                  border: 'none',
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '11px',
-                }}
-              >
-                Selected ({selectedIds.size})
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('all_filtered')}
-                style={{
-                  background: viewMode === 'all_filtered' ? '#FF324B' : 'transparent',
-                  color: viewMode === 'all_filtered' ? '#FFFFFF' : '#94A3B8',
-                  border: 'none',
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '11px',
-                }}
-              >
-                All Filtered ({colleges.length})
-              </button>
-            </div>
-
-            <span style={{ color: '#64748B', fontSize: '11px' }}>
-              Showing {displayItems.length} records in view
-            </span>
-          </div>
-
-          {/* Recipient Cards Table */}
+          {/* RECIPIENT COLLEGES LIST */}
           <div
             style={{
-              maxHeight: '440px',
+              maxHeight: '420px',
               overflowY: 'auto',
               border: '1px solid var(--border-subtle)',
               borderRadius: '8px',
@@ -979,16 +1192,26 @@ export default function CampaignsPage() {
             {loading ? (
               <div style={{ padding: '40px 20px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
                 <RefreshCw size={24} className="spin" style={{ margin: '0 auto 10px', color: '#FF324B' }} />
-                <div>Loading colleges from directory...</div>
+                <div>Loading colleges for {selectedState}...</div>
+              </div>
+            ) : !isLocationChosen ? (
+              <div style={{ padding: '44px 20px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
+                <MapPin size={32} color="#64748B" style={{ margin: '0 auto 10px' }} />
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>
+                  No State Selected
+                </div>
+                <div style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>
+                  Select your country and target state in the filters above to load institutions.
+                </div>
               </div>
             ) : displayItems.length === 0 ? (
               <div style={{ padding: '44px 20px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
                 <Building size={32} color="#64748B" style={{ margin: '0 auto 10px' }} />
                 <div style={{ fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>
-                  No colleges match the active filters
+                  No colleges found in this view
                 </div>
                 <div style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>
-                  Try choosing a different state, clearing the district filter, or broadening the search query.
+                  Try switching back to the Active Batch tab or clearing search filters.
                 </div>
               </div>
             ) : (
@@ -1171,7 +1394,7 @@ export default function CampaignsPage() {
           </div>
 
           {/* Pagination when in all_filtered mode */}
-          {viewMode === 'all_filtered' && colleges.length > listPageSize && (
+          {isLocationChosen && viewMode === 'all_filtered' && colleges.length > listPageSize && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginTop: '4px' }}>
               <span style={{ color: '#94A3B8' }}>
                 Page {listPage} of {Math.ceil(colleges.length / listPageSize)}
@@ -1448,7 +1671,7 @@ export default function CampaignsPage() {
           {/* Action Button: Execute Batch Campaign */}
           <button
             type="button"
-            disabled={isSending || selectedIds.size === 0}
+            disabled={!isLocationChosen || isSending || selectedIds.size === 0}
             onClick={handleLaunchCampaign}
             className="btn btn-primary"
             style={{
@@ -1460,13 +1683,20 @@ export default function CampaignsPage() {
               justifyContent: 'center',
               gap: '10px',
               marginTop: 'auto',
-              boxShadow: selectedIds.size > 0 ? '0 4px 20px rgba(255, 50, 75, 0.35)' : 'none',
+              opacity: !isLocationChosen || selectedIds.size === 0 ? 0.6 : 1,
+              cursor: !isLocationChosen || selectedIds.size === 0 ? 'not-allowed' : 'pointer',
+              boxShadow: isLocationChosen && selectedIds.size > 0 ? '0 4px 20px rgba(255, 50, 75, 0.35)' : 'none',
             }}
           >
             {isSending ? (
               <>
                 <RefreshCw size={16} className="spin" />
                 <span>Sending Batch ({progressPercent}%)...</span>
+              </>
+            ) : !isLocationChosen ? (
+              <>
+                <Lock size={16} />
+                <span>Select State &amp; District to Enable Send</span>
               </>
             ) : (
               <>
