@@ -120,9 +120,11 @@ export function cleanUrl(url: string | null | undefined): string | null {
 /**
  * Standardizes State Names across various portal representations
  */
-export function normalizeStateName(rawState: string | null | undefined): string {
-  if (!rawState) return 'Other';
+export function normalizeStateName(rawState: string | null | undefined): string | null {
+  if (!rawState) return null;
   const clean = rawState.trim();
+  if (/\d/.test(clean) || clean.length < 3) return null;
+
   const lower = clean.toLowerCase();
 
   if (lower === 'orissa' || lower.includes('odisha')) return 'Odisha';
@@ -149,9 +151,17 @@ export function normalizeStateName(rawState: string | null | undefined): string 
   if (lower.includes('goa') || lower === 'ga') return 'Goa';
   if (lower.includes('jammu') || lower.includes('kashmir') || lower === 'jk') return 'Jammu and Kashmir';
   if (lower.includes('chandigarh') || lower === 'ch') return 'Chandigarh';
+  if (lower.includes('puducherry') || lower.includes('pondicherry')) return 'Puducherry';
+  if (lower.includes('tripura')) return 'Tripura';
+  if (lower.includes('meghalaya')) return 'Meghalaya';
+  if (lower.includes('manipur')) return 'Manipur';
+  if (lower.includes('mizoram')) return 'Mizoram';
+  if (lower.includes('nagaland')) return 'Nagaland';
+  if (lower.includes('sikkim')) return 'Sikkim';
+  if (lower.includes('arunachal')) return 'Arunachal Pradesh';
+  if (lower.includes('ladakh')) return 'Ladakh';
 
-  // Capitalize title-case fallback
-  return clean.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase());
+  return null;
 }
 
 /**
@@ -192,6 +202,7 @@ export function normalizeCollegeData(
 
   const collegeName = rawName.trim().replace(/\s+/g, ' ');
   const state = normalizeStateName(raw.state);
+  if (!state) return null;
   const district = normalizeDistrictName(raw.district || raw.city);
   const officialWebsite = cleanUrl(raw.officialWebsite || raw.website || raw.url);
   const officialEmail = normalizeEmail(raw.officialEmail || raw.email) || null;
@@ -736,14 +747,18 @@ export async function fetchNIRFData(options: {
 
       const $ = cheerio.load(res.data);
       $('table tbody tr').each((_, elem) => {
-        const cols = $(elem).find('td');
-        if (cols.length >= 3) {
-          const rawName = $(cols[1]).text().trim();
-          const rawCity = cols.length >= 4 ? $(cols[2]).text().trim() : 'General';
-          const rawState = cols.length >= 5 ? $(cols[3]).text().trim() : 'India';
+        // Use .children('td') to avoid picking up nested modal sub-table cells
+        const cols = $(elem).children('td');
+        if (cols.length >= 4) {
+          let rawName = $(cols[1]).text().trim();
+          if (rawName.includes('More Details')) {
+            rawName = rawName.split('More Details')[0].trim();
+          }
+          const rawCity = $(cols[2]).text().trim();
+          const rawState = $(cols[3]).text().trim();
           const link = $(elem).find('a[href^="http"]').attr('href') || null;
 
-          if (rawName) {
+          if (rawName && !/^\d+/.test(rawName) && rawName.length > 3) {
             const normalized = normalizeCollegeData(
               {
                 collegeName: rawName,

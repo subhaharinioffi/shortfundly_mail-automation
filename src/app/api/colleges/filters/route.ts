@@ -8,13 +8,15 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const selectedState = searchParams.get('state');
 
-    // Fetch distinct states
+    // Fetch distinct states (strictly alphabetic valid state names)
     const statesResult = await prisma.college.findMany({
       select: { state: true },
       distinct: ['state'],
       orderBy: { state: 'asc' },
     });
-    const states = statesResult.map((s) => s.state).filter(Boolean);
+    const states = statesResult
+      .map((s) => s.state)
+      .filter((st) => Boolean(st) && !/^\d+/.test(st.trim()) && st.trim().length >= 3);
 
     // Fetch distinct districts (optionally filtered by selected state)
     const districtWhere: any = {};
@@ -28,7 +30,9 @@ export async function GET(request: NextRequest) {
       distinct: ['district'],
       orderBy: { district: 'asc' },
     });
-    const districts = districtsResult.map((d) => d.district).filter(Boolean);
+    const districts = districtsResult
+      .map((d) => d.district)
+      .filter((dst) => Boolean(dst) && !/^\d+/.test(dst.trim()) && dst.trim().length >= 2);
 
     // Common standard staff roles
     const standardRoles = [
