@@ -37,3 +37,7 @@ Thumbs.db
 recordings/
 __pycache__/
 *.pyc
+
+# Large raw datasets (already ingested in PostgreSQL)
+data/all_india_colleges_*
+

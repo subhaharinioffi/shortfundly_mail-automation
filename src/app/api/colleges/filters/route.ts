@@ -30,9 +30,21 @@ export async function GET(request: NextRequest) {
       distinct: ['district'],
       orderBy: { district: 'asc' },
     });
-    const districts = districtsResult
+    const rawDistricts = districtsResult
       .map((d) => d.district)
-      .filter((dst) => Boolean(dst) && !/^\d+/.test(dst.trim()) && dst.trim().length >= 2);
+      .map((dst) => (dst || '').replace(/^["'\s(]+|["'\s)]+$/g, '').replace(/-\s*\d+.*$/g, '').trim())
+      .filter((dst) => 
+        Boolean(dst) && 
+        dst.length >= 3 && 
+        !/^\d+/.test(dst) && 
+        !/pin\s*code/i.test(dst) &&
+        !/\bpo\b|\btk\b/i.test(dst) &&
+        !/post\s*box/i.test(dst) &&
+        !/campus/i.test(dst)
+      );
+
+    // Deduplicate and sort
+    const districts = Array.from(new Set(rawDistricts)).sort();
 
     // Common standard staff roles
     const standardRoles = [

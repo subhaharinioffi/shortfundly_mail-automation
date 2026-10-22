@@ -107,7 +107,7 @@ export default function DashboardPage() {
               Mission Control Active
             </span>
             <span style={{ fontSize: '12px', color: '#64748B' }}>
-              State Assigned: Odisha, India
+              Scope: All India College Directory
             </span>
           </div>
           <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#FFFFFF' }}>
@@ -147,7 +147,7 @@ export default function DashboardPage() {
           </div>
           <div>
             <div className="stat-number">{stats.totalColleges}</div>
-            <div className="stat-label">Total Odisha Colleges</div>
+            <div className="stat-label">Total Colleges</div>
           </div>
         </div>
 
@@ -189,10 +189,10 @@ export default function DashboardPage() {
           <div>
             <div className="card-title">
               <FilmstripIcon size={18} color="#FF324B" />
-              <span>Odisha Outreach Saturation</span>
+              <span>National Outreach Saturation</span>
             </div>
             <div className="card-subtitle">
-              Progress towards contacting all institutions across Odisha
+              Progress towards contacting all institutions across India
             </div>
           </div>
           <span style={{ fontSize: '18px', fontWeight: 800, color: '#FF324B' }}>
@@ -234,8 +234,8 @@ export default function DashboardPage() {
             <span>Continue Outreach</span>
           </Link>
           <Link href="/colleges" className="btn btn-secondary">
-            <Upload size={14} />
-            <span>Import Dataset</span>
+            <GraduationCap size={14} />
+            <span>View Directory</span>
           </Link>
         </div>
       </div>

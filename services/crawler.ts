@@ -144,22 +144,25 @@ export function normalizeStateName(rawState: string | null | undefined): string 
   if (lower.includes('telangana') || lower === 'ts') return 'Telangana';
   if (lower.includes('assam') || lower === 'as') return 'Assam';
   if (lower.includes('madhya') || lower === 'mp') return 'Madhya Pradesh';
-  if (lower.includes('chhattisgarh') || lower === 'cg') return 'Chhattisgarh';
+  if (lower.includes('chhat') || lower.includes('chhattisgarh') || lower === 'cg') return 'Chhattisgarh';
   if (lower.includes('jharkhand') || lower === 'jh') return 'Jharkhand';
-  if (lower.includes('uttarakhand') || lower === 'uk') return 'Uttarakhand';
+  if (lower.includes('uttarakhand') || lower.includes('uttrakhand') || lower.includes('uttaranchal') || lower === 'uk') return 'Uttarakhand';
   if (lower.includes('himachal') || lower === 'hp') return 'Himachal Pradesh';
   if (lower.includes('goa') || lower === 'ga') return 'Goa';
   if (lower.includes('jammu') || lower.includes('kashmir') || lower === 'jk') return 'Jammu and Kashmir';
   if (lower.includes('chandigarh') || lower === 'ch') return 'Chandigarh';
-  if (lower.includes('puducherry') || lower.includes('pondicherry')) return 'Puducherry';
-  if (lower.includes('tripura')) return 'Tripura';
-  if (lower.includes('meghalaya')) return 'Meghalaya';
-  if (lower.includes('manipur')) return 'Manipur';
-  if (lower.includes('mizoram')) return 'Mizoram';
-  if (lower.includes('nagaland')) return 'Nagaland';
-  if (lower.includes('sikkim')) return 'Sikkim';
-  if (lower.includes('arunachal')) return 'Arunachal Pradesh';
-  if (lower.includes('ladakh')) return 'Ladakh';
+  if (lower.includes('puducherry') || lower.includes('pondicherry') || lower === 'py') return 'Puducherry';
+  if (lower.includes('tripura') || lower === 'tr') return 'Tripura';
+  if (lower.includes('meghalaya') || lower === 'ml') return 'Meghalaya';
+  if (lower.includes('manipur') || lower === 'mn') return 'Manipur';
+  if (lower.includes('mizoram') || lower === 'mz') return 'Mizoram';
+  if (lower.includes('nagaland') || lower === 'nl') return 'Nagaland';
+  if (lower.includes('sikkim') || lower === 'sk') return 'Sikkim';
+  if (lower.includes('arunachal') || lower === 'ar') return 'Arunachal Pradesh';
+  if (lower.includes('ladakh') || lower === 'la') return 'Ladakh';
+  if (lower.includes('andaman') || lower.includes('nicobar')) return 'Andaman and Nicobar Islands';
+  if (lower.includes('dadra') || lower.includes('nagar haveli') || lower.includes('daman') || lower.includes('diu')) return 'Dadra and Nagar Haveli and Daman and Diu';
+  if (lower.includes('lakshadweep')) return 'Lakshadweep';
 
   return null;
 }
@@ -170,6 +173,7 @@ export function normalizeStateName(rawState: string | null | undefined): string 
 export function normalizeDistrictName(rawDistrict: string | null | undefined): string {
   if (!rawDistrict || rawDistrict.trim() === '-' || rawDistrict.trim() === '') return 'General';
   const clean = rawDistrict.trim().replace(/\s+/g, ' ');
+  if (/^\d+/.test(clean)) return 'General';
   return clean.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase());
 }
 
@@ -252,6 +256,7 @@ export async function fetchAISHEData(options: {
   if (!buffer) {
     const candidates = [
       options.localFilePath,
+      path.resolve(process.cwd(), 'data/all_india_colleges_aishe.csv'),
       path.resolve(process.cwd(), 'Odisha_Colleges_Master_Unique_Directory.xlsx'),
       path.resolve(process.cwd(), 'Orissa_Colleges_Complete_Email_Directory.xlsx'),
     ].filter(Boolean) as string[];
@@ -364,6 +369,29 @@ export async function fetchAICTEData(options: {
       }
     } catch (err: any) {
       console.warn(`[AICTE] Live endpoint (${endpoint}) error: ${err?.message}`);
+    }
+  }
+
+  // Load from local AICTE master dataset if remote endpoint is restricted
+  if (results.length === 0) {
+    const aicteLocal = path.resolve(process.cwd(), 'data/all_india_colleges_aicte.json');
+    if (fs.existsSync(aicteLocal)) {
+      try {
+        const rawJson = JSON.parse(fs.readFileSync(aicteLocal, 'utf8'));
+        const limit = options.limit || 500;
+        for (const item of rawJson.slice(0, limit)) {
+          const rawName = (item.college || item.name || '').replace(/\s*\(Id:[^)]*\)\s*$/i, '');
+          const normalized = normalizeCollegeData(
+            {
+              collegeName: rawName,
+              state: item.state,
+              district: item.district,
+            },
+            'AICTE'
+          );
+          if (normalized) results.push(normalized);
+        }
+      } catch (_) {}
     }
   }
 

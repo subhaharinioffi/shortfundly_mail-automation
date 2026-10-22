@@ -49,6 +49,7 @@ export default function Navbar() {
   }, [pathname]);
 
   const navItems = [
+    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Directory', href: '/colleges', icon: GraduationCap },
     { 
       label: 'Approvals', 
@@ -56,12 +57,11 @@ export default function Navbar() {
       icon: ClipboardCheck,
       badge: pendingCount 
     },
-    { label: 'Templates', href: '/templates', icon: FileText },
-    { label: 'Settings', href: '/settings', icon: SettingsIcon },
-    { label: 'Direct Send', href: '/manual-send', icon: PenTool },
     { label: 'Campaigns', href: '/campaigns', icon: Send },
+    { label: 'Direct Send', href: '/manual-send', icon: PenTool },
+    { label: 'Templates', href: '/templates', icon: FileText },
     { label: 'Logs', href: '/logs', icon: Activity },
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Settings', href: '/settings', icon: SettingsIcon },
   ];
 
   return (
@@ -71,7 +71,7 @@ export default function Navbar() {
         <div className="navbar-container">
           
           {/* Brand Logo & Name */}
-          <Link href="/colleges" className="brand-link" style={{ flexShrink: 0, textDecoration: 'none' }}>
+          <Link href="/dashboard" className="brand-link" style={{ flexShrink: 0, textDecoration: 'none' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src="/shortfundly-logo.png" 
