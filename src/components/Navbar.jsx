@@ -14,7 +14,9 @@ import {
   Activity,
   LayoutDashboard,
   LogOut, 
-  LogIn
+  LogIn,
+  Menu,
+  X
 } from 'lucide-react';
 import RoleSwitcher from './RoleSwitcher';
 
@@ -22,6 +24,12 @@ export default function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [pendingCount, setPendingCount] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   // Poll pending change requests count for the live badge
   useEffect(() => {
@@ -71,52 +79,36 @@ export default function Navbar() {
         <div className="navbar-container">
           
           {/* Brand Logo & Name */}
-          <Link href="/dashboard" className="brand-link" style={{ flexShrink: 0, textDecoration: 'none' }}>
+          <Link href="/dashboard" className="brand-link">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src="/shortfundly-logo.png" 
               alt="Shortfundly" 
-              style={{ 
-                height: '36px', 
-                width: '36px', 
-                borderRadius: '50%', 
-                objectFit: 'cover', 
-                filter: 'drop-shadow(0 2px 8px rgba(255, 50, 75, 0.4))',
-                flexShrink: 0
-              }}
+              className="brand-logo-img"
             />
-            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-              <span style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.2px', whiteSpace: 'nowrap' }}>
+            <div className="brand-text-container">
+              <span className="brand-title">
                 Shortfundly Campus
               </span>
-              <span style={{ fontSize: '11px', color: '#94A3B8', whiteSpace: 'nowrap' }}>
+              <span className="brand-subtext">
                 Outreach & Data Pipeline
               </span>
             </div>
           </Link>
 
-          {/* Navigation Bar Links */}
-          <nav className="nav-container-desktop" style={{ flexShrink: 0, overflowX: 'auto' }}>
-            <ul className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '4px', margin: 0, padding: 0, listStyle: 'none', flexWrap: 'nowrap' }}>
+          {/* Desktop Navigation Bar Links */}
+          <nav className="nav-container-desktop">
+            <ul className="nav-links">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
                 return (
-                  <li key={item.href} style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
+                  <li key={item.href}>
                     <Link 
                       href={item.href} 
                       className={`nav-item-link ${isActive ? 'active' : ''}`}
-                      style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '6px', 
-                        padding: '7px 11px', 
-                        fontSize: '13.5px',
-                        fontWeight: 600,
-                        position: 'relative'
-                      }}
                     >
-                      <Icon size={15} style={{ flexShrink: 0 }} />
+                      <Icon size={14} style={{ flexShrink: 0 }} />
                       <span>{item.label}</span>
                       {typeof item.badge === 'number' && item.badge > 0 && (
                         <span className="nav-badge" title={`${item.badge} pending review items`}>
@@ -130,40 +122,106 @@ export default function Navbar() {
             </ul>
           </nav>
 
-          {/* Right Side: Role & User Info */}
-          <div className="nav-user-panel" style={{ flexShrink: 0 }}>
+          {/* Right Side: Role & User Info & Logout Button */}
+          <div className="nav-user-panel">
             {session ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF', whiteSpace: 'nowrap' }}>
-                      {session.user.name}
+              <div className="nav-user-controls">
+                <div className="nav-user-info">
+                  <div className="nav-user-name-row">
+                    <span className="nav-user-name">
+                      {session.user.name || 'User'}
                     </span>
                     <RoleSwitcher />
                   </div>
-                  <span style={{ fontSize: '11px', color: '#64748B', whiteSpace: 'nowrap' }}>
+                  <span className="nav-user-email">
                     {session.user.email}
                   </span>
                 </div>
+                {/* Prominent High-Visibility Logout Button */}
                 <button
+                  type="button"
                   onClick={() => signOut({ callbackUrl: '/login' })}
-                  className="btn btn-secondary btn-sm"
-                  title="Sign Out"
-                  style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  className="btn-logout"
+                  title="Sign Out of Session"
+                  aria-label="Logout"
                 >
                   <LogOut size={14} />
                   <span>Logout</span>
                 </button>
               </div>
             ) : (
-              <Link href="/login" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>
+              <Link href="/login" className="btn btn-primary btn-sm">
                 <LogIn size={14} />
                 <span>Portal Login</span>
               </Link>
             )}
+
+            {/* Mobile Menu Toggle */}
+            <button
+              type="button"
+              className="mobile-nav-toggle"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle Navigation Menu"
+            >
+              {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
           </div>
 
         </div>
+
+        {/* Mobile Navigation Drawer */}
+        {mobileMenuOpen && (
+          <div className="mobile-nav-drawer">
+            <ul className="nav-links">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <li key={item.href}>
+                    <Link 
+                      href={item.href} 
+                      className={`nav-item-link ${isActive ? 'active' : ''}`}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Icon size={16} />
+                      <span>{item.label}</span>
+                      {typeof item.badge === 'number' && item.badge > 0 && (
+                        <span className="nav-badge">
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {session && (
+              <div className="mobile-nav-user-section">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>
+                      {session.user.name}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#94A3B8' }}>
+                      {session.user.email}
+                    </div>
+                  </div>
+                  <RoleSwitcher />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  className="btn-logout"
+                  style={{ width: '100%', padding: '10px 16px', justifyContent: 'center' }}
+                >
+                  <LogOut size={16} />
+                  <span>Logout</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </header>
     </>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { 
   Settings as SettingsIcon, 
@@ -17,6 +17,8 @@ import {
   Lock,
   Clock,
   X,
+  LogOut,
+  User,
 } from 'lucide-react';
 import { FilmstripIcon } from '@/components/Icons';
 
@@ -408,6 +410,33 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
+
+          {/* Active Session & Logout Card */}
+          {session && (
+            <div className="card" style={{ padding: '24px' }}>
+              <div className="card-header" style={{ marginBottom: '14px' }}>
+                <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <User size={18} color="#FF324B" />
+                  <span>Current Operator Session</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', background: 'rgba(7, 9, 14, 0.7)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.06)', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{session.user.name}</div>
+                  <div style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>{session.user.email}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  className="btn-logout"
+                  style={{ padding: '8px 16px', fontSize: '13px' }}
+                >
+                  <LogOut size={15} />
+                  <span>Logout from Session</span>
+                </button>
+              </div>
+            </div>
+          )}
 
         </div>
 
