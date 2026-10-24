@@ -2,16 +2,22 @@ import prisma from '../src/lib/prisma';
 
 async function main() {
   const count = await prisma.college.count();
-  const states = await prisma.college.groupBy({
-    by: ['state'],
-    _count: { id: true },
-    orderBy: { state: 'asc' },
+  const withWebsite = await prisma.college.count({
+    where: {
+      officialWebsite: { not: null },
+      NOT: { officialWebsite: '-' },
+    },
+  });
+  const crawled = await prisma.college.count({
+    where: { lastCrawledAt: { not: null } },
+  });
+  const pendingRequests = await prisma.changeRequest.count({
+    where: { status: 'PENDING' },
   });
   console.log(`Total colleges in DB: ${count}`);
-  console.log('States breakdown:');
-  states.forEach(s => {
-    console.log(`  - ${s.state}: ${s._count.id} colleges`);
-  });
+  console.log(`Colleges with website: ${withWebsite}`);
+  console.log(`Colleges with lastCrawledAt: ${crawled}`);
+  console.log(`Pending change requests: ${pendingRequests}`);
 }
 
 main()

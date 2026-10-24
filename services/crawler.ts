@@ -1239,23 +1239,118 @@ export async function deepScrapeCollege(collegeId: string) {
   };
 }
 
+// =========================================================================
+// Automated 10-Day Crawl Cadence Settings & Status
+// =========================================================================
+export const CRAWL_CYCLE_DAYS = 10;
+export const CRAWL_INTERVAL_MS = CRAWL_CYCLE_DAYS * 24 * 60 * 60 * 1000;
+
 /**
- * Executes full pipeline across ingestion and deep scraping
+ * Retrieves real-time status of the 10-day automated Firecrawl cycle
  */
-export async function runFullPipeline(options: { maxColleges?: number } = {}) {
-  console.log('=== Starting College Data Pipeline Automation ===');
+export async function getCrawlerCycleStatus() {
+  const tenDaysAgo = new Date(Date.now() - CRAWL_INTERVAL_MS);
 
-  // Phase 1: Ingest 7 Official Seed Sources
-  const ingestionResult = await ingestAllSeedSources({ limitPerSource: options.maxColleges || 15 });
-
-  // Phase 2: Deep Scrape Colleges with websites
-  const collegesToCrawl = await prisma.college.findMany({
+  // Total colleges with active official websites
+  const totalCollegesWithWebsites = await prisma.college.count({
     where: {
       officialWebsite: { not: null },
+      NOT: { officialWebsite: '-' },
     },
-    take: options.maxColleges || 3,
-    orderBy: { createdAt: 'desc' },
   });
+
+  // Colleges due for their 10-day check (never crawled or older than 10 days)
+  const collegesDueForCrawl = await prisma.college.count({
+    where: {
+      officialWebsite: { not: null },
+      NOT: { officialWebsite: '-' },
+      OR: [
+        { lastCrawledAt: null },
+        { lastCrawledAt: { lte: tenDaysAgo } },
+      ],
+    },
+  });
+
+  const collegesUpToDate = Math.max(0, totalCollegesWithWebsites - collegesDueForCrawl);
+
+  // Most recent crawl event across the directory
+  const latestCrawled = await prisma.college.findFirst({
+    where: { lastCrawledAt: { not: null } },
+    orderBy: { lastCrawledAt: 'desc' },
+    select: { lastCrawledAt: true, collegeName: true },
+  });
+
+  const lastCycleRunAt = latestCrawled?.lastCrawledAt || null;
+  const nextCycleScheduledAt = lastCycleRunAt
+    ? new Date(lastCycleRunAt.getTime() + CRAWL_INTERVAL_MS)
+    : new Date(); // Due now if never run
+
+  const isCycleDue =
+    collegesDueForCrawl > 0 ||
+    !lastCycleRunAt ||
+    Date.now() - lastCycleRunAt.getTime() >= CRAWL_INTERVAL_MS;
+
+  const pendingChangeRequests = await prisma.changeRequest.count({
+    where: { status: 'PENDING' },
+  });
+
+  return {
+    cycleIntervalDays: CRAWL_CYCLE_DAYS,
+    totalCollegesWithWebsites,
+    collegesDueForCrawl,
+    collegesUpToDate,
+    totalMonitoredSources: 7,
+    lastCycleRunAt,
+    latestCollegeName: latestCrawled?.collegeName || null,
+    nextCycleScheduledAt,
+    isCycleDue,
+    pendingChangeRequests,
+    sources: [
+      { name: 'AISHE', url: 'https://dashboard.aishe.gov.in/hedirectory/#/hedirectory', interval: '10 Days', status: 'ACTIVE' },
+      { name: 'AICTE', url: 'https://www.aicte-india.org/', interval: '10 Days', status: 'ACTIVE' },
+      { name: 'UGC', url: 'https://www.ugc.gov.in/universitydetails/', interval: '10 Days', status: 'ACTIVE' },
+      { name: 'NMC', url: 'https://nmc.org.in/', interval: '10 Days', status: 'ACTIVE' },
+      { name: 'PCI', url: 'https://www.pci.gov.in/en/', interval: '10 Days', status: 'ACTIVE' },
+      { name: 'INC', url: 'https://indiannursingcouncil.org/', interval: '10 Days', status: 'ACTIVE' },
+      { name: 'NIRF', url: 'https://www.nirfindia.org/', interval: '10 Days', status: 'ACTIVE' },
+    ],
+  };
+}
+
+/**
+ * Executes full pipeline across 7 portal URL sources and individual college URLs
+ * adhering strictly to the 10-day verification cadence
+ */
+export async function runFullPipeline(options: { maxColleges?: number; forceAll?: boolean } = {}) {
+  const tenDaysAgo = new Date(Date.now() - CRAWL_INTERVAL_MS);
+  console.log(`=== Starting 10-Day Automated Firecrawl Pipeline (Threshold: ${tenDaysAgo.toISOString()}) ===`);
+
+  // Phase 1: Ingest & Check 7 Official Portal Sources
+  const ingestionResult = await ingestAllSeedSources({ limitPerSource: options.maxColleges || 15 });
+
+  // Phase 2: Deep Scrape Individual College URLs Due for Verification
+  const whereClause: any = {
+    officialWebsite: { not: null },
+    NOT: { officialWebsite: '-' },
+  };
+
+  if (!options.forceAll) {
+    whereClause.OR = [
+      { lastCrawledAt: null },
+      { lastCrawledAt: { lte: tenDaysAgo } },
+    ];
+  }
+
+  const collegesToCrawl = await prisma.college.findMany({
+    where: whereClause,
+    take: options.maxColleges || 6,
+    orderBy: [
+      { lastCrawledAt: 'asc' }, // Prioritize institutions never crawled or crawled longest ago
+      { createdAt: 'desc' },
+    ],
+  });
+
+  console.log(`[Phase 2] Found ${collegesToCrawl.length} individual institutions due for 10-day Firecrawl scan.`);
 
   const crawlResults = [];
   for (const c of collegesToCrawl) {
@@ -1270,7 +1365,9 @@ export async function runFullPipeline(options: { maxColleges?: number } = {}) {
   }
 
   const totalNewRequests = crawlResults.reduce((acc, curr) => acc + (curr.changeRequestsCreated || 0), 0);
-  console.log(`=== Pipeline Complete: ${crawlResults.length} colleges deep-scraped, ${totalNewRequests} updates routed to review queue. ===`);
+  console.log(`=== 10-Day Pipeline Complete: ${crawlResults.length} colleges deep-scraped, ${totalNewRequests} updates routed to review queue. ===`);
+
+  const updatedStatus = await getCrawlerCycleStatus();
 
   return {
     phase1: ingestionResult,
@@ -1279,6 +1376,7 @@ export async function runFullPipeline(options: { maxColleges?: number } = {}) {
       changeRequestsDetected: totalNewRequests,
       details: crawlResults,
     },
+    cycleStatus: updatedStatus,
   };
 }
 

@@ -6,10 +6,20 @@ export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {
-    const result = await runFullPipeline({ maxColleges: 6 });
+    let body: any = {};
+    try {
+      body = await request.json();
+    } catch {
+      // Body is optional
+    }
+
+    const maxColleges = typeof body?.maxColleges === 'number' ? body.maxColleges : 6;
+    const forceAll = Boolean(body?.forceAll);
+
+    const result = await runFullPipeline({ maxColleges, forceAll });
     return NextResponse.json({
       success: true,
-      message: 'Automated directory pipeline and Firecrawl deep-scrape completed successfully.',
+      message: `10-day automated crawl cycle executed. ${result.phase2.collegesScraped} institutions deep-scraped, ${result.phase2.changeRequestsDetected} update(s) detected.`,
       result,
     });
   } catch (error: any) {

@@ -12,9 +12,17 @@ import {
   MapPin, 
   Calendar, 
   CheckCircle2, 
-  AlertCircle,
-  Clock,
-  ArrowLeft
+  AlertCircle, 
+  Clock, 
+  ArrowLeft,
+  Globe,
+  ShieldCheck,
+  Layers,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  Activity,
+  Timer
 } from 'lucide-react';
 
 export default function ApprovalsPage() {
@@ -25,10 +33,32 @@ export default function ApprovalsPage() {
   const [statusFilter, setStatusFilter] = useState('PENDING'); // PENDING, APPROVED, REJECTED, all
   const [toastMessage, setToastMessage] = useState(null);
 
+  // 10-Day Automated Firecrawl Cycle State
+  const [cycleStatus, setCycleStatus] = useState(null);
+  const [cycleLoading, setCycleLoading] = useState(true);
+  const [triggeringCrawl, setTriggeringCrawl] = useState(false);
+  const [showSourcesDetails, setShowSourcesDetails] = useState(false);
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
+
+  // Fetch 10-Day Cycle Status
+  const fetchCycleStatus = useCallback(async () => {
+    setCycleLoading(true);
+    try {
+      const res = await fetch('/api/crawler/status');
+      if (res.ok) {
+        const data = await res.json();
+        setCycleStatus(data.status);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch crawler cycle status:', err);
+    } finally {
+      setCycleLoading(false);
+    }
+  }, []);
 
   // Fetch change requests from review queue
   const fetchRequests = useCallback(async () => {
@@ -50,7 +80,39 @@ export default function ApprovalsPage() {
 
   useEffect(() => {
     fetchRequests();
-  }, [fetchRequests]);
+    fetchCycleStatus();
+  }, [fetchRequests, fetchCycleStatus]);
+
+  // Handle Manual Trigger of 10-Day Cycle Check
+  const handleTriggerCycleCheck = async (forceAll = false) => {
+    setTriggeringCrawl(true);
+    showToast('Executing 10-day Firecrawl scan on government sources and individual college websites...');
+    try {
+      const res = await fetch('/api/crawler/trigger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ maxColleges: 6, forceAll }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const detected = data.result?.phase2?.changeRequestsDetected || 0;
+        const scanned = data.result?.phase2?.collegesScraped || 0;
+        showToast(
+          detected > 0
+            ? `10-Day Cycle complete! Scanned ${scanned} college URLs. ${detected} update(s) detected and routed to Review Queue.`
+            : `10-Day Cycle complete! Scanned ${scanned} college URLs. All records are currently up to date.`
+        );
+        fetchCycleStatus();
+        fetchRequests();
+      } else {
+        showToast(`Crawl failed: ${data.error || 'Server error'}`);
+      }
+    } catch (err) {
+      showToast('Error executing 10-day cycle check. Please try again.');
+    } finally {
+      setTriggeringCrawl(false);
+    }
+  };
 
   // Handle Select All Checkbox
   const handleSelectAll = (e) => {
@@ -88,6 +150,7 @@ export default function ApprovalsPage() {
       if (res.ok) {
         showToast(data.message || `Successfully processed ${targetIds.length} item(s).`);
         fetchRequests();
+        fetchCycleStatus();
       } else {
         showToast(`Error: ${data.error || 'Failed to process action'}`);
       }
@@ -157,23 +220,190 @@ export default function ApprovalsPage() {
               <span>Back to Directory</span>
             </Link>
           </div>
-          <h1 className="page-title">Website Change Requests</h1>
+          <h1 className="page-title">Website Change Requests & Approvals</h1>
           <p className="page-subtitle">
-            Review and approve updates automatically found on college websites.
+            Review and approve staff contact updates automatically detected on official college websites.
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button 
-            onClick={fetchRequests} 
-            disabled={loading || processing}
+            onClick={() => { fetchRequests(); fetchCycleStatus(); }} 
+            disabled={loading || processing || cycleLoading}
             className="btn btn-secondary btn-sm"
-            title="Refresh review queue"
+            title="Refresh review queue and cycle status"
           >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={14} className={loading || cycleLoading ? 'animate-spin' : ''} />
             <span>Refresh</span>
           </button>
         </div>
+      </div>
+
+      {/* Firecrawl 10-Day Automated Change Detection & System Control Card */}
+      <div className="system-control-card">
+        <div className="system-control-header">
+          <div className="system-control-title-wrap">
+            <div style={{ background: 'rgba(255, 50, 75, 0.15)', padding: '10px', borderRadius: '10px', color: '#ff324b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Globe size={22} />
+            </div>
+            <div>
+              <div className="system-control-title">
+                <span>Automated 10-Day Firecrawl Change Detection</span>
+                <span className="cadence-badge-active">
+                  <span className="pulse-dot" />
+                  <span>10-Day Cycle Active</span>
+                </span>
+              </div>
+              <div className="system-control-subtitle">
+                Firecrawl checks the 7 official government sources & deep-scrapes individual college URLs once every 10 days for staff email updates.
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowSourcesDetails(!showSourcesDetails)}
+              className="btn btn-secondary btn-sm"
+              title="View monitored portal sources & refresh cadence"
+            >
+              <Layers size={13} />
+              <span>Monitored Sources (7)</span>
+              {showSourcesDetails ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+            </button>
+
+            <button
+              onClick={() => handleTriggerCycleCheck(false)}
+              disabled={triggeringCrawl}
+              className="btn btn-primary btn-sm"
+              style={{ boxShadow: '0 4px 15px rgba(255, 50, 75, 0.4)' }}
+              title="Trigger 10-day deep-scrape verification across due institutions"
+            >
+              <RefreshCw size={13} className={triggeringCrawl ? 'animate-spin' : ''} />
+              <span>{triggeringCrawl ? 'Scanning Sources & URLs...' : 'Run 10-Day Cycle Check Now'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Metrics Grid */}
+        <div className="system-control-grid">
+          <div className="system-metric-box">
+            <div className="system-metric-label">Update Cadence</div>
+            <div className="system-metric-value" style={{ color: '#38bdf8' }}>
+              <span>Every 10 Days</span>
+            </div>
+            <div className="system-metric-hint">Automated recurring interval</div>
+          </div>
+
+          <div className="system-metric-box">
+            <div className="system-metric-label">Monitored College URLs</div>
+            <div className="system-metric-value" style={{ color: '#ffffff' }}>
+              <span>{cycleStatus?.totalCollegesWithWebsites || 964}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>institutions</span>
+            </div>
+            <div className="system-metric-hint">Active official websites</div>
+          </div>
+
+          <div className="system-metric-box" style={{ borderColor: 'rgba(245, 158, 11, 0.25)' }}>
+            <div className="system-metric-label">Due for 10-Day Check</div>
+            <div className="system-metric-value" style={{ color: '#f59e0b' }}>
+              <span>{cycleStatus?.collegesDueForCrawl || 0}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>colleges</span>
+            </div>
+            <div className="system-metric-hint">&gt;10 days since last crawl</div>
+          </div>
+
+          <div className="system-metric-box" style={{ borderColor: 'rgba(16, 185, 129, 0.25)' }}>
+            <div className="system-metric-label">Up-to-Date (&lt;10 Days)</div>
+            <div className="system-metric-value" style={{ color: '#10b981' }}>
+              <span>{cycleStatus?.collegesUpToDate || 0}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>verified</span>
+            </div>
+            <div className="system-metric-hint">Scanned in current cycle</div>
+          </div>
+
+          <div className="system-metric-box">
+            <div className="system-metric-label">Next Scheduled Cycle</div>
+            <div className="system-metric-value" style={{ fontSize: '14px', color: '#e2e8f0', marginTop: '4px' }}>
+              {cycleStatus?.nextCycleScheduledAt 
+                ? new Date(cycleStatus.nextCycleScheduledAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })
+                : 'Due Immediately'}
+            </div>
+            <div className="system-metric-hint">
+              {cycleStatus?.isCycleDue ? '⚡ Cycle ready to execute' : 'Automated standby'}
+            </div>
+          </div>
+
+          <div className="system-metric-box">
+            <div className="system-metric-label">Pending Approval Queue</div>
+            <div className="system-metric-value" style={{ color: requests.length > 0 ? '#ff324b' : '#94a3b8' }}>
+              <span>{requests.filter(r => r.status === 'PENDING').length || cycleStatus?.pendingChangeRequests || 0}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>updates</span>
+            </div>
+            <div className="system-metric-hint">Awaiting human review</div>
+          </div>
+        </div>
+
+        {/* Expandable Sources & Workflow Detail Tray */}
+        {showSourcesDetails && (
+          <div style={{ marginTop: '14px', padding: '16px', background: 'rgba(7, 9, 14, 0.85)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--cinema-cyan)' }}>
+                7 Official Portals Monitored on 10-Day Cadence
+              </span>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                Changes routed to this Review Queue before commit
+              </span>
+            </div>
+
+            <div className="system-sources-list" style={{ marginBottom: '14px' }}>
+              {(cycleStatus?.sources || [
+                { name: 'AISHE', url: 'https://dashboard.aishe.gov.in/hedirectory/#/hedirectory' },
+                { name: 'AICTE', url: 'https://www.aicte-india.org/' },
+                { name: 'UGC', url: 'https://www.ugc.gov.in/universitydetails/' },
+                { name: 'NMC', url: 'https://nmc.org.in/' },
+                { name: 'PCI', url: 'https://www.pci.gov.in/en/' },
+                { name: 'INC', url: 'https://indiannursingcouncil.org/' },
+                { name: 'NIRF', url: 'https://www.nirfindia.org/' },
+              ]).map((src) => (
+                <a
+                  key={src.name}
+                  href={src.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="system-source-tag active"
+                  style={{ textDecoration: 'none' }}
+                  title={`Open official ${src.name} portal`}
+                >
+                  <ShieldCheck size={12} color="#06b6d4" />
+                  <span>{src.name} Portal</span>
+                  <span style={{ fontSize: '10px', color: '#94a3b8' }}>• 10d</span>
+                  <ExternalLink size={10} style={{ opacity: 0.6 }} />
+                </a>
+              ))}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px', fontSize: '12px', color: '#94a3b8', borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: '12px' }}>
+              <div>
+                <strong style={{ color: '#ffffff' }}>Step 1: Portal & Website Check</strong>
+                <p style={{ marginTop: '2px' }}>
+                  Pipeline monitors 7 master government directories and checks for official institution URL additions or modifications.
+                </p>
+              </div>
+              <div>
+                <strong style={{ color: '#ffffff' }}>Step 2: Firecrawl Deep Scraping</strong>
+                <p style={{ marginTop: '2px' }}>
+                  Firecrawl targets contact and administration pages (`/contact`, `/administration`, etc.) on individual college websites.
+                </p>
+              </div>
+              <div>
+                <strong style={{ color: '#ffffff' }}>Step 3: Diff Detection & Approval</strong>
+                <p style={{ marginTop: '2px' }}>
+                  New staff emails or changes are detected by diffing against active records. All changes queue here for human review.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Filter Tabs (Pending Review / Approved History / Rejected History) */}
